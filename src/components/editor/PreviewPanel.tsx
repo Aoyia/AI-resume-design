@@ -13,7 +13,7 @@ const A4_CONTENT_H = A4_H - A4_PADDING_Y * 2; // 1027px 有效高度
 
 export default function PreviewPanel() {
   const { resume } = useResumeStore();
-  const [scale, setScale] = useState(0.75);
+  const [scale, setScale] = useState(1);
   const [pages, setPages] = useState<number[][]>([]);
   const containerRef = useRef<HTMLDivElement>(null);
   const measureRef = useRef<HTMLDivElement>(null);
