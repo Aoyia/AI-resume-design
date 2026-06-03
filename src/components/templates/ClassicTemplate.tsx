@@ -416,7 +416,7 @@ export default function ClassicTemplate({ data, elementIndices }: ClassicTemplat
 
   return (
     <div
-      className="w-full h-full bg-white text-gray-800 leading-relaxed"
+      className="w-full h-full bg-white text-gray-800 leading-relaxed break-all"
       style={{
         fontFamily: data.theme.fontFamily,
         fontSize: `${data.theme.fontSize}px`,
