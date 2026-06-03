@@ -35,7 +35,7 @@ function SectionTitle({ title, color }: { title: string; color: string }) {
 function DateRange({ start, end }: { start: string; end: string }) {
   if (!start && !end) return null;
   return (
-    <span className="text-[0.78em] text-gray-600 shrink-0">
+    <span className="text-[0.78em] text-gray-800 shrink-0">
       {start}{start && end ? ' – ' : ''}{end}
     </span>
   );
@@ -58,9 +58,9 @@ export function getFlatElements(data: ResumeData): React.ReactElement[] {
       <div className="flex-1 min-w-0">
         <h1 className="text-[1.6em] font-bold tracking-wide mb-0.5">{b.name || '您的姓名'}</h1>
         {b.jobTitle && (
-          <div className="text-[0.9em] font-medium mb-2 text-gray-600">{b.jobTitle}</div>
+          <div className="text-[0.9em] font-medium mb-2 text-gray-800">{b.jobTitle}</div>
         )}
-        <div className="flex flex-wrap gap-x-4 gap-y-0.5 text-[0.8em] text-gray-500">
+        <div className="flex flex-wrap gap-x-4 gap-y-0.5 text-[0.8em] text-gray-800">
           {b.phone    && <span>{b.phone}</span>}
           {b.email    && <span>{b.email}</span>}
           {b.location && <span>{b.location}</span>}
@@ -95,7 +95,7 @@ export function getFlatElements(data: ResumeData): React.ReactElement[] {
               <span className="font-semibold text-[0.88em]" style={{ whiteSpace: 'pre-wrap' }}>{education[0].school}</span>
               <DateRange start={education[0].startDate} end={education[0].endDate} />
             </div>
-            <div className="text-[0.82em] text-gray-500" style={{ whiteSpace: 'pre-wrap' }}>{education[0].major} · {education[0].degree}</div>
+            <div className="text-[0.82em] text-gray-800" style={{ whiteSpace: 'pre-wrap' }}>{education[0].major} · {education[0].degree}</div>
             {education[0].description && <MdContent content={education[0].description} />}
           </div>
         </div>
@@ -109,7 +109,7 @@ export function getFlatElements(data: ResumeData): React.ReactElement[] {
               <span className="font-semibold text-[0.88em]" style={{ whiteSpace: 'pre-wrap' }}>{edu.school}</span>
               <DateRange start={edu.startDate} end={edu.endDate} />
             </div>
-            <div className="text-[0.82em] text-gray-500" style={{ whiteSpace: 'pre-wrap' }}>{edu.major} · {edu.degree}</div>
+            <div className="text-[0.82em] text-gray-800" style={{ whiteSpace: 'pre-wrap' }}>{edu.major} · {edu.degree}</div>
             {edu.description && <MdContent content={edu.description} />}
           </div>
         );
@@ -186,7 +186,7 @@ export function getFlatElements(data: ResumeData): React.ReactElement[] {
                 {(skills as any[]).map((s) => (
                   <div key={s.id} className="flex gap-2 text-[0.84em] resume-item">
                     {s.category && <span className="font-semibold shrink-0 min-w-[4em]">{s.category}：</span>}
-                    <span className="text-gray-600">{s.content}</span>
+                    <span className="text-gray-800">{s.content}</span>
                   </div>
                 ))}
               </div>
@@ -314,9 +314,9 @@ export function getFlatElements(data: ResumeData): React.ReactElement[] {
               <div key={item.id} className="flex justify-between items-baseline text-[0.84em] resume-item">
                 <div style={{ whiteSpace: 'pre-wrap' }}>
                   <span className="font-semibold">{item.name}</span>
-                  {item.description && <span className="text-gray-500 ml-2">({item.description})</span>}
+                  {item.description && <span className="text-gray-800 ml-2">({item.description})</span>}
                 </div>
-                <span className="text-gray-600 text-[0.9em] shrink-0">{item.date}</span>
+                <span className="text-gray-800 text-[0.9em] shrink-0">{item.date}</span>
               </div>
             ))}
           </div>
@@ -332,7 +332,7 @@ export function getFlatElements(data: ResumeData): React.ReactElement[] {
             {certificate.map((item) => (
               <div key={item.id} className="flex justify-between items-baseline text-[0.84em] resume-item">
                 <span className="font-semibold" style={{ whiteSpace: 'pre-wrap' }}>{item.name}</span>
-                <span className="text-gray-600 text-[0.9em] shrink-0">{item.date}</span>
+                <span className="text-gray-800 text-[0.9em] shrink-0">{item.date}</span>
               </div>
             ))}
           </div>
@@ -348,7 +348,7 @@ export function getFlatElements(data: ResumeData): React.ReactElement[] {
             {languageSkill.map((item) => (
               <div key={item.id} className="flex justify-between items-baseline text-[0.84em] resume-item">
                 <span className="font-semibold" style={{ whiteSpace: 'pre-wrap' }}>{item.name}</span>
-                <span className="text-gray-500 text-[0.95em] text-right flex-1 ml-4" style={{ whiteSpace: 'pre-wrap' }}>{item.level}</span>
+                <span className="text-gray-800 text-[0.95em] text-right flex-1 ml-4" style={{ whiteSpace: 'pre-wrap' }}>{item.level}</span>
               </div>
             ))}
           </div>
@@ -365,9 +365,9 @@ export function getFlatElements(data: ResumeData): React.ReactElement[] {
               <div key={item.id} className="flex justify-between items-baseline text-[0.84em] resume-item">
                 <div style={{ whiteSpace: 'pre-wrap' }}>
                   <span className="font-semibold">{item.name}</span>
-                  <span className="text-gray-500 ml-2 font-medium" style={{ color, whiteSpace: 'pre-wrap' }}>{item.award}</span>
+                  <span className="text-gray-800 ml-2 font-medium" style={{ color, whiteSpace: 'pre-wrap' }}>{item.award}</span>
                 </div>
-                <span className="text-gray-600 text-[0.9em] shrink-0">{item.date}</span>
+                <span className="text-gray-800 text-[0.9em] shrink-0">{item.date}</span>
               </div>
             ))}
           </div>
@@ -382,7 +382,7 @@ export function getFlatElements(data: ResumeData): React.ReactElement[] {
           <div className="resume-item">
             <div className="flex items-baseline justify-between">
               <span className="font-semibold text-[0.88em]" style={{ whiteSpace: 'pre-wrap' }}>{researchPublication[0].name}</span>
-              <span className="text-[0.78em] text-gray-600 shrink-0">{researchPublication[0].date}</span>
+              <span className="text-[0.78em] text-gray-800 shrink-0">{researchPublication[0].date}</span>
             </div>
             <MdContent content={researchPublication[0].description} />
           </div>
@@ -394,7 +394,7 @@ export function getFlatElements(data: ResumeData): React.ReactElement[] {
           <div key={`pub-group-${pub.id}`} className="resume-item mb-3">
             <div className="flex items-baseline justify-between">
               <span className="font-semibold text-[0.88em]" style={{ whiteSpace: 'pre-wrap' }}>{pub.name}</span>
-              <span className="text-[0.78em] text-gray-600 shrink-0">{pub.date}</span>
+              <span className="text-[0.78em] text-gray-800 shrink-0">{pub.date}</span>
             </div>
             <MdContent content={pub.description} />
           </div>
