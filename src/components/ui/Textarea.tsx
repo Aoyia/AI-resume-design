@@ -14,7 +14,7 @@ interface TextareaProps extends Omit<TextareaHTMLAttributes<HTMLTextAreaElement>
 }
 
 const Textarea = forwardRef<any, TextareaProps>(
-  ({ className, label, hint, id, rows = 4, value, onChange, onBlur, ...props }, ref) => {
+  ({ className, label, hint, id, rows = 4, value, onChange, onBlur, onKeyDown, ...props }, ref) => {
     const textareaId = id ?? label;
     const [localValue, setLocalValue] = useState(value ?? '');
     const timerRef = useRef<NodeJS.Timeout | null>(null);
@@ -74,6 +74,81 @@ const Textarea = forwardRef<any, TextareaProps>(
       }
     };
 
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+      const isMac = typeof window !== 'undefined' && /macintosh|mac os x/i.test(navigator.userAgent);
+      const isBoldKey = isMac 
+        ? (e.metaKey && e.key.toLowerCase() === 'b') 
+        : (e.ctrlKey && e.key.toLowerCase() === 'b');
+
+      if (isBoldKey) {
+        e.preventDefault();
+        const textarea = e.currentTarget;
+        if (textarea) {
+          const start = textarea.selectionStart;
+          const end = textarea.selectionEnd;
+          const text = textarea.value;
+
+          const selectedText = text.substring(start, end);
+
+          let newText = '';
+          let newSelectionStart = start;
+          let newSelectionEnd = end;
+
+          // 情况1: 选中的文本本身前后就是 ** 包裹
+          if (selectedText.startsWith('**') && selectedText.endsWith('**') && selectedText.length >= 4) {
+            const unwrapped = selectedText.slice(2, -2);
+            newText = text.substring(0, start) + unwrapped + text.substring(end);
+            newSelectionStart = start;
+            newSelectionEnd = end - 4;
+          } 
+          // 情况2: 选中的文本外部被 ** 包裹
+          else if (
+            start >= 2 &&
+            end <= text.length - 2 &&
+            text.substring(start - 2, start) === '**' &&
+            text.substring(end, end + 2) === '**'
+          ) {
+            const unwrapped = selectedText;
+            newText = text.substring(0, start - 2) + unwrapped + text.substring(end + 2);
+            newSelectionStart = start - 2;
+            newSelectionEnd = end - 2;
+          } 
+          // 情况3: 没有加粗，添加 ** 包裹
+          else {
+            newText = text.substring(0, start) + '**' + selectedText + '**' + text.substring(end);
+            newSelectionStart = start + 2;
+            newSelectionEnd = end + 2;
+          }
+
+          if (timerRef.current) {
+            clearTimeout(timerRef.current);
+          }
+
+          setLocalValue(newText);
+
+          if (onChangeRef.current) {
+            const mockEvent = {
+              ...e,
+              target: {
+                ...e.target,
+                value: newText,
+              },
+            } as unknown as React.ChangeEvent<HTMLTextAreaElement>;
+            onChangeRef.current(mockEvent);
+          }
+
+          setTimeout(() => {
+            textarea.focus();
+            textarea.setSelectionRange(newSelectionStart, newSelectionEnd);
+          }, 0);
+        }
+      }
+
+      if (onKeyDown) {
+        onKeyDown(e);
+      }
+    };
+
     // 组件卸载时清理定时器
     useEffect(() => {
       return () => {
@@ -100,6 +175,7 @@ const Textarea = forwardRef<any, TextareaProps>(
           value={localValue as string}
           onChange={handleLocalChange}
           onBlur={handleBlur}
+          onKeyDown={handleKeyDown}
           className={cn(
             'w-full bg-slate-50/70 text-sm transition-all duration-200 rounded-[var(--radius-md)] border border-transparent font-mono leading-relaxed',
             'focus:bg-white',
