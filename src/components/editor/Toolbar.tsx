@@ -191,7 +191,7 @@ export default function Toolbar() {
   };
 
   return (
-    <header className="flex items-center gap-2 px-4 h-11 bg-white border-b border-[var(--border)] shrink-0 z-10">
+    <header className="flex items-center gap-2 px-4 h-11 bg-white border-b border-[var(--border)] shrink-0 z-40">
       {/* Logo */}
       <div className="flex items-center gap-2 mr-2 group cursor-pointer select-none">
         <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-blue-600 via-indigo-500 to-violet-600 flex items-center justify-center shadow-sm shadow-indigo-100 transition-all duration-300 group-hover:shadow-md group-hover:shadow-indigo-200/50 group-hover:scale-102">
