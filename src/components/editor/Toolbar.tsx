@@ -1,7 +1,7 @@
 'use client';
 
-import { Download, RotateCcw, Cloud, CloudOff, LogOut, User, Sliders, Image as ImageIcon, Loader2 } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { Download, RotateCcw, Cloud, CloudOff, LogOut, User, Sliders, Image as ImageIcon, Loader2, Layers, Plus, Trash2, Edit3, FileUp, FileDown, Database, Check } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
 import { useResumeStore } from '@/store/useResumeStore';
 import { useAuthStore } from '@/store/useAuthStore';
 import LoginModal from './LoginModal';
@@ -16,7 +16,11 @@ const THEME_COLORS = [
 ];
 
 export default function Toolbar() {
-  const { resume, updateTheme, resetResume } = useResumeStore();
+  const { 
+    resume, updateTheme, resetResume,
+    resumes, currentResumeId, switchResume, createResume, deleteResume, renameResume,
+    importSingleResume, importBackupPackage
+  } = useResumeStore();
   const { isLoggedIn, user, logout } = useAuthStore();
   
   const [downloading, setDownloading] = useState(false);
@@ -24,6 +28,101 @@ export default function Toolbar() {
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [isStylePanelOpen, setIsStylePanelOpen] = useState(false);
   const [syncStatus, setSyncStatus] = useState<'synced' | 'saving' | 'offline'>('offline');
+
+  // 多简历管理与导入导出状态
+  const [isResumeManagerOpen, setIsResumeManagerOpen] = useState(false);
+  const [editingResumeId, setEditingResumeId] = useState<string | null>(null);
+  const [renameValue, setRenameValue] = useState('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleCreateNew = () => {
+    createResume();
+  };
+
+  const handleDelete = (id: string, name: string) => {
+    if (confirm(`确定删除简历“${name || '未命名'}”吗？此操作不可撤销。`)) {
+      deleteResume(id);
+    }
+  };
+
+  const handleRenameConfirm = (id: string) => {
+    if (renameValue.trim()) {
+      renameResume(id, renameValue.trim());
+    }
+    setEditingResumeId(null);
+  };
+
+  const handleExportCurrent = () => {
+    try {
+      const dataStr = JSON.stringify(resume, null, 2);
+      const blob = new Blob([dataStr], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      const name = resume.basicInfo.name || '我的简历';
+      a.download = `${name}_简历配置.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      alert('导出失败，请重试');
+      console.error(e);
+    }
+  };
+
+  const handleExportAll = () => {
+    try {
+      const backupData = {
+        type: 'resume-backup-package',
+        version: 1,
+        exportedAt: new Date().toISOString(),
+        resumes: resumes,
+      };
+      const dataStr = JSON.stringify(backupData, null, 2);
+      const blob = new Blob([dataStr], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      const dateStr = new Date().toISOString().split('T')[0];
+      a.download = `全部简历备份_${dateStr}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      alert('导出失败，请重试');
+      console.error(e);
+    }
+  };
+
+  const handleImportFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const text = event.target?.result as string;
+        const parsed = JSON.parse(text);
+
+        // 校验是备份包还是单份简历
+        if (parsed.type === 'resume-backup-package' && Array.isArray(parsed.resumes)) {
+          const action = confirm(
+            `检测到备份包中含有 ${parsed.resumes.length} 份简历。\n点击“确定”将覆盖本地所有简历，点击“取消”将合并追加到当前列表。`
+          );
+          importBackupPackage(parsed.resumes, action);
+          alert(action ? '已成功覆盖恢复所有简历！' : '已成功合并追加简历列表！');
+        } else if (parsed.basicInfo && parsed.theme && parsed.sectionOrder) {
+          importSingleResume(parsed);
+          alert(`成功导入简历：“${parsed.basicInfo.name || '未命名'}”！已为您切换至该简历。`);
+        } else {
+          alert('文件格式不正确，未能检测到合法的简历数据字段。');
+        }
+      } catch (err) {
+        alert('文件读取解析失败，请确保上传的是有效的 JSON 备份文件。');
+        console.error(err);
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = '';
+  };
 
   // 模拟云端自动保存状态
   useEffect(() => {
@@ -158,6 +257,153 @@ export default function Toolbar() {
 
       {/* 右侧操作区 */}
       <div className="ml-auto flex items-center gap-1 relative">
+        {/* 我的简历管理按钮与浮层 */}
+        <div className="relative">
+          <button
+            onClick={() => setIsResumeManagerOpen(!isResumeManagerOpen)}
+            className="flex items-center gap-1 px-1.5 py-1.5 text-xs font-semibold text-blue-600 hover:text-blue-700 active:text-blue-800 bg-transparent border-0 cursor-pointer select-none rounded transition-colors duration-150 focus:outline-none"
+          >
+            <Layers size={13} />
+            我的简历
+          </button>
+
+          {isResumeManagerOpen && (
+            <>
+              {/* 点击外部关闭 */}
+              <div className="fixed inset-0 z-20 cursor-default" onClick={() => setIsResumeManagerOpen(false)} />
+              
+              {/* 简历管理面板 (毛玻璃效果) */}
+              <div className="absolute right-0 top-10 bg-white/95 backdrop-blur-md p-4 rounded-xl border border-slate-100 shadow-2xl z-30 flex flex-col gap-4 animate-scale-up min-w-[280px] max-w-[340px]">
+                <div className="flex items-center justify-between border-b border-slate-100 pb-1.5">
+                  <h4 className="text-xs font-bold text-[var(--text-primary)]">简历列表管理</h4>
+                  <button
+                    onClick={handleCreateNew}
+                    className="flex items-center gap-0.5 text-[10px] font-bold text-blue-600 hover:text-blue-700 cursor-pointer bg-transparent border-0 focus:outline-none"
+                  >
+                    <Plus size={10} />
+                    新建
+                  </button>
+                </div>
+                
+                {/* 简历列表项 */}
+                <div className="max-h-[160px] overflow-y-auto space-y-1.5 pr-0.5 scrollbar-thin">
+                  {resumes.map((r) => {
+                    const isCurrent = r.id === currentResumeId;
+                    const isEditing = r.id === editingResumeId;
+                    return (
+                      <div
+                        key={r.id}
+                        className={`group p-2 rounded-lg border transition-all duration-150 flex items-center justify-between gap-2
+                          ${isCurrent 
+                            ? 'border-blue-200 bg-blue-50/30' 
+                            : 'border-slate-100 hover:border-slate-200 hover:bg-slate-50/50'}`}
+                      >
+                        {isEditing ? (
+                          <div className="flex items-center gap-1.5 flex-1 min-w-0">
+                            <input
+                              type="text"
+                              value={renameValue}
+                              onChange={(e) => setRenameValue(e.target.value)}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') handleRenameConfirm(r.id);
+                                if (e.key === 'Escape') setEditingResumeId(null);
+                              }}
+                              autoFocus
+                              className="w-full text-xs px-1.5 py-0.5 border border-blue-400 rounded focus:outline-none bg-white"
+                            />
+                            <button
+                              onClick={() => handleRenameConfirm(r.id)}
+                              className="text-blue-600 hover:text-blue-700 p-0.5 cursor-pointer bg-transparent border-0 focus:outline-none shrink-0"
+                            >
+                              <Check size={12} />
+                            </button>
+                          </div>
+                        ) : (
+                          <div 
+                            onClick={() => !isCurrent && switchResume(r.id)}
+                            className="flex-1 min-w-0 text-left cursor-pointer select-none"
+                          >
+                            <div className="text-xs font-bold text-slate-700 truncate">
+                              {r.basicInfo.name || '未命名'}
+                            </div>
+                            <div className="text-[9px] text-slate-400 truncate mt-0.5">
+                              {r.basicInfo.jobTitle || '暂无求职意向'}
+                            </div>
+                          </div>
+                        )}
+
+                        {!isEditing && (
+                          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-150 shrink-0">
+                            <button
+                              onClick={() => {
+                                setEditingResumeId(r.id);
+                                setRenameValue(r.basicInfo.name || '');
+                              }}
+                              title="重命名"
+                              className="p-1 hover:bg-slate-100 text-slate-400 hover:text-slate-600 rounded cursor-pointer bg-transparent border-0 focus:outline-none"
+                            >
+                              <Edit3 size={11} />
+                            </button>
+                            {resumes.length > 1 && (
+                              <button
+                                onClick={() => handleDelete(r.id, r.basicInfo.name)}
+                                title="删除"
+                                className="p-1 hover:bg-red-50 text-slate-400 hover:text-red-600 rounded cursor-pointer bg-transparent border-0 focus:outline-none"
+                              >
+                                <Trash2 size={11} />
+                              </button>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* 导入与备份区域 */}
+                <div className="border-t border-slate-100 pt-3 flex flex-col gap-2">
+                  <span className="text-[10px] font-bold text-[var(--text-secondary)]">备份与恢复</span>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      onClick={handleExportCurrent}
+                      title="导出当前简历数据为 JSON"
+                      className="flex items-center justify-center gap-1 py-1.5 border border-slate-200 hover:border-blue-200 hover:bg-blue-50/20 rounded-lg text-[10px] font-bold text-slate-600 hover:text-blue-600 cursor-pointer bg-white transition-all duration-150 focus:outline-none"
+                    >
+                      <FileDown size={11} />
+                      导出当前
+                    </button>
+                    <button
+                      onClick={handleExportAll}
+                      title="将所有简历打包导出备份"
+                      className="flex items-center justify-center gap-1 py-1.5 border border-slate-200 hover:border-blue-200 hover:bg-blue-50/20 rounded-lg text-[10px] font-bold text-slate-600 hover:text-blue-600 cursor-pointer bg-white transition-all duration-150 focus:outline-none"
+                    >
+                      <Database size={11} />
+                      全部备份
+                    </button>
+                  </div>
+                  
+                  <button
+                    onClick={() => fileInputRef.current?.click()}
+                    title="上传本地备份文件 (.json) 恢复简历"
+                    className="flex items-center justify-center gap-1.5 py-1.5 bg-blue-600 hover:bg-blue-700 rounded-lg text-[10px] font-bold text-white cursor-pointer border-0 shadow-sm transition-all duration-150 focus:outline-none"
+                  >
+                    <FileUp size={11} />
+                    导入配置数据 (.json)
+                  </button>
+                  
+                  <input
+                    type="file"
+                    ref={fileInputRef}
+                    accept=".json"
+                    onChange={handleImportFile}
+                    className="hidden"
+                  />
+                </div>
+              </div>
+            </>
+          )}
+        </div>
+
         {/* 排版样式控制按钮与浮层 */}
         <div className="relative">
           <button

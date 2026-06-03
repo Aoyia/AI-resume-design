@@ -157,8 +157,8 @@ export const DEFAULT_SECTION_ORDER: SectionKey[] = [
   'education',
 ];
 
-export const createEmptyResume = (): ResumeData => ({
-  id: 'yang-zhong-yuan-demo-id',
+export const createEmptyResume = (id = 'yang-zhong-yuan-demo-id'): ResumeData => ({
+  id,
   theme: { ...DEFAULT_THEME },
   basicInfo: {
     name: '杨忠源',

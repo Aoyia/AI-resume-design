@@ -1,6 +1,6 @@
 'use client';
 
-import { create } from 'zustand';
+import { create, StateCreator } from 'zustand';
 import { persist } from 'zustand/middleware';
 import {
   ResumeData,
@@ -23,6 +23,14 @@ import { uid } from '@/lib/utils';
 // ─── Store 接口定义 ────────────────────────────────────────
 interface ResumeStore {
   resume: ResumeData;
+  resumes: ResumeData[];
+  currentResumeId: string;
+  switchResume: (id: string) => void;
+  createResume: (name?: string) => void;
+  deleteResume: (id: string) => void;
+  renameResume: (id: string, name: string) => void;
+  importSingleResume: (data: ResumeData) => void;
+  importBackupPackage: (resumes: ResumeData[], override: boolean) => void;
 
   // 主题
   updateTheme: (patch: Partial<ResumeTheme>) => void;
@@ -126,10 +134,49 @@ function reorderList<T extends { id: string }>(list: T[], orderedIds: string[]):
   return orderedIds.map((id) => list.find((i) => i.id === id)!).filter(Boolean);
 }
 
+// ─── 多简历同步中间件 ───────────────────────────────────────
+const syncResumesMiddleware = <T extends ResumeStore>(
+  config: StateCreator<T, [], []>
+): StateCreator<T, [], []> => {
+  return (set, get, api) => {
+    const customSet: typeof set = (partial, replace) => {
+      set((state) => {
+        const nextState = typeof partial === 'function' ? partial(state) : partial;
+
+        // 仅当更新中显式包含了 resume 时，同步至 resumes 列表
+        if (nextState.resume) {
+          const updatedResume = nextState.resume;
+          const currentResumes = nextState.resumes || state.resumes || [];
+          const currentId = nextState.currentResumeId || state.currentResumeId || updatedResume.id;
+
+          let newResumes = [...currentResumes];
+          if (newResumes.length === 0) {
+            newResumes = [updatedResume];
+          } else {
+            const index = newResumes.findIndex((r) => r.id === currentId);
+            if (index !== -1) {
+              newResumes[index] = { ...newResumes[index], ...updatedResume, id: currentId };
+            } else {
+              newResumes.push(updatedResume);
+            }
+          }
+          return {
+            ...nextState,
+            resumes: newResumes,
+            currentResumeId: currentId,
+          } as any;
+        }
+        return nextState as any;
+      }, replace);
+    };
+    return config(customSet, get, api);
+  };
+};
+
 // ─── Store 实现 ────────────────────────────────────────────
 export const useResumeStore = create<ResumeStore>()(
   persist(
-    (set) => ({
+    syncResumesMiddleware((set) => ({
       resume: createEmptyResume(),
 
       // 主题
@@ -508,10 +555,126 @@ export const useResumeStore = create<ResumeStore>()(
         set((s) => ({ resume: { ...s.resume, sectionOrder: order } })),
 
       // 重置
-      resetResume: () => set({ resume: createEmptyResume() }),
-    }),
+      resetResume: () => set((s) => ({ resume: createEmptyResume(s.currentResumeId) })),
+
+      // 多简历管理
+      resumes: [],
+      currentResumeId: '',
+      switchResume: (id) =>
+        set((s) => {
+          const target = s.resumes.find((r) => r.id === id);
+          if (!target) return {};
+          return { currentResumeId: id, resume: target };
+        }),
+      createResume: (name) =>
+        set((s) => {
+          const newId = uid();
+          const newResume = createEmptyResume(newId);
+          newResume.basicInfo.name = name || '未命名简历';
+          return {
+            resumes: [...s.resumes, newResume],
+            currentResumeId: newId,
+            resume: newResume,
+          };
+        }),
+      renameResume: (id, name) =>
+        set((s) => {
+          const isCurrent = s.currentResumeId === id;
+          const updatedResumes = s.resumes.map((r) => {
+            if (r.id === id) {
+              return { ...r, basicInfo: { ...r.basicInfo, name } };
+            }
+            return r;
+          });
+          const updatedResume = isCurrent
+            ? { ...s.resume, basicInfo: { ...s.resume.basicInfo, name } }
+            : s.resume;
+          return {
+            resumes: updatedResumes,
+            resume: updatedResume,
+          };
+        }),
+      deleteResume: (id) =>
+        set((s) => {
+          const newResumes = s.resumes.filter((r) => r.id !== id);
+          let nextId = s.currentResumeId;
+          let nextResume = s.resume;
+          if (s.currentResumeId === id) {
+            if (newResumes.length > 0) {
+              nextId = newResumes[0].id;
+              nextResume = newResumes[0];
+            } else {
+              const emptyId = uid();
+              const empty = createEmptyResume(emptyId);
+              newResumes.push(empty);
+              nextId = emptyId;
+              nextResume = empty;
+            }
+          }
+          return {
+            resumes: newResumes,
+            currentResumeId: nextId,
+            resume: nextResume,
+          };
+        }),
+      importSingleResume: (data) =>
+        set((s) => {
+          const newId = uid();
+          const imported = {
+            ...data,
+            id: newId,
+            basicInfo: {
+              ...data.basicInfo,
+              name: `${data.basicInfo.name || '未命名'} (导入)`
+            }
+          };
+          return {
+            resumes: [...s.resumes, imported],
+            currentResumeId: newId,
+            resume: imported,
+          };
+        }),
+      importBackupPackage: (resumesList, override) =>
+        set((s) => {
+          const processed = resumesList.map(r => ({
+            ...r,
+            id: override ? r.id : uid(),
+            basicInfo: {
+              ...r.basicInfo,
+              name: override ? r.basicInfo.name : `${r.basicInfo.name || '未命名'} (导入)`
+            }
+          }));
+
+          const nextResumes = override ? processed : [...s.resumes, ...processed];
+          const nextId = processed.length > 0 ? processed[0].id : s.currentResumeId;
+          const nextResume = processed.length > 0 ? processed[0] : s.resume;
+
+          return {
+            resumes: nextResumes,
+            currentResumeId: nextId,
+            resume: nextResume,
+          };
+        }),
+    })),
     {
       name: 'resume_local_draft',
+      onRehydrateStorage: () => (state) => {
+        if (state) {
+          // 确保有 resumes 列表和 currentResumeId
+          if (!state.resumes || state.resumes.length === 0) {
+            const currentResume = state.resume || createEmptyResume();
+            if (!currentResume.id || currentResume.id === 'yang-zhong-yuan-demo-id') {
+              currentResume.id = uid();
+            }
+            state.resumes = [currentResume];
+            state.currentResumeId = currentResume.id;
+            state.resume = currentResume;
+          } else if (!state.currentResumeId) {
+            state.currentResumeId = state.resumes[0].id;
+            state.resume = state.resumes[0];
+          }
+        }
+      }
     }
   )
 );
