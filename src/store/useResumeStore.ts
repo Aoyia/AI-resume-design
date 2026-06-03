@@ -134,6 +134,40 @@ function reorderList<T extends { id: string }>(list: T[], orderedIds: string[]):
   return orderedIds.map((id) => list.find((i) => i.id === id)!).filter(Boolean);
 }
 
+// ─── 清洗简历技术栈加粗数据 helper ───────────────────────────────
+function cleanResumeData(r: ResumeData): ResumeData {
+  if (!r) return r;
+
+  const cleanDescription = (desc: string) => {
+    if (!desc) return desc;
+    return desc
+      .split('\n')
+      .map((line) => {
+        const match = line.match(/^(\*\*技术栈\*\*|技术栈)：(.*)$/);
+        if (match) {
+          const prefix = match[1];
+          const content = match[2];
+          const cleanedContent = content.replace(/\*\*/g, '');
+          return `${prefix}：${cleanedContent}`;
+        }
+        return line;
+      })
+      .join('\n');
+  };
+
+  if (r.projects && Array.isArray(r.projects)) {
+    return {
+      ...r,
+      projects: r.projects.map((p) => ({
+        ...p,
+        description: cleanDescription(p.description || ''),
+      })),
+    };
+  }
+
+  return r;
+}
+
 // ─── 多简历同步中间件 ───────────────────────────────────────
 const syncResumesMiddleware = <T extends ResumeStore>(
   config: StateCreator<T, [], []>
@@ -620,12 +654,13 @@ export const useResumeStore = create<ResumeStore>()(
       importSingleResume: (data) =>
         set((s) => {
           const newId = uid();
+          const cleanedData = cleanResumeData(data);
           const imported = {
-            ...data,
+            ...cleanedData,
             id: newId,
             basicInfo: {
-              ...data.basicInfo,
-              name: `${data.basicInfo.name || '未命名'} (导入)`
+              ...cleanedData.basicInfo,
+              name: `${cleanedData.basicInfo.name || '未命名'} (导入)`
             }
           };
           return {
@@ -636,14 +671,17 @@ export const useResumeStore = create<ResumeStore>()(
         }),
       importBackupPackage: (resumesList, override) =>
         set((s) => {
-          const processed = resumesList.map(r => ({
-            ...r,
-            id: override ? r.id : uid(),
-            basicInfo: {
-              ...r.basicInfo,
-              name: override ? r.basicInfo.name : `${r.basicInfo.name || '未命名'} (导入)`
-            }
-          }));
+          const processed = resumesList.map(r => {
+            const cleaned = cleanResumeData(r);
+            return {
+              ...cleaned,
+              id: override ? cleaned.id : uid(),
+              basicInfo: {
+                ...cleaned.basicInfo,
+                name: override ? cleaned.basicInfo.name : `${cleaned.basicInfo.name || '未命名'} (导入)`
+              }
+            };
+          });
 
           const nextResumes = override ? processed : [...s.resumes, ...processed];
           const nextId = processed.length > 0 ? processed[0].id : s.currentResumeId;
@@ -660,6 +698,14 @@ export const useResumeStore = create<ResumeStore>()(
       name: 'resume_local_draft',
       onRehydrateStorage: () => (state) => {
         if (state) {
+          // 自动清洗已加载数据中技术栈的加粗词
+          if (state.resumes) {
+            state.resumes = state.resumes.map(cleanResumeData);
+          }
+          if (state.resume) {
+            state.resume = cleanResumeData(state.resume);
+          }
+
           // 确保有 resumes 列表和 currentResumeId
           if (!state.resumes || state.resumes.length === 0) {
             const currentResume = state.resume || createEmptyResume();
