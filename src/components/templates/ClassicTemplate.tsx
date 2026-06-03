@@ -12,8 +12,8 @@ function MdContent({ content }: { content: string }) {
       components={{
         ul: ({ children }) => <ul className="list-disc pl-4 space-y-0.5">{children}</ul>,
         ol: ({ children }) => <ol className="list-decimal pl-4 space-y-0.5">{children}</ol>,
-        li: ({ children }) => <li className="text-[0.85em]">{children}</li>,
-        p:  ({ children }) => <p className="text-[0.85em] leading-relaxed">{children}</p>,
+        li: ({ children }) => <li className="text-[0.85em] break-all">{children}</li>,
+        p:  ({ children }) => <p className="text-[0.85em] leading-relaxed break-all">{children}</p>,
         strong: ({ children }) => <strong className="font-semibold">{children}</strong>,
       }}
     >
