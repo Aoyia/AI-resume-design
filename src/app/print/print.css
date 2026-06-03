@@ -1,0 +1,55 @@
+/* 打印路由专属样式：去除所有浏览器默认边距，控制分页 */
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html, body {
+  width: 210mm;
+  background: white;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+.print-page-container {
+  width: 210mm;
+  height: 297mm;
+  padding: 13mm 14mm; /* 对应网页端的 48px 52px */
+  background: white;
+  box-sizing: border-box;
+  overflow: hidden;
+  position: relative;
+}
+
+@media print {
+  @page {
+    size: A4;
+    margin: 0;
+  }
+
+  html, body {
+    width: 210mm;
+    height: auto;
+    background: white;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  .print-page-container {
+    width: 210mm;
+    height: 297mm;
+    page-break-after: always !important;
+    break-after: page !important;
+    overflow: hidden;
+  }
+
+  .print-page-container:last-child {
+    page-break-after: avoid !important;
+    break-after: avoid !important;
+  }
+
+  /* 确保背景色被打印 */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+}
