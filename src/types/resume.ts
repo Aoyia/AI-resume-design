@@ -169,7 +169,7 @@ export const createEmptyResume = (id = 'yang-zhong-yuan-demo-id'): ResumeData =>
   },
   basicInfo: {
     name: "杨忠源",
-    jobTitle: " 低代码平台前端 4 年经验 | 全日制本科 ｜前端开发工程师",
+    jobTitle: "低代码平台前端 4 年经验 ｜ 全日制本科 ｜ 前端开发工程师",
     phone: "15779736785",
     email: "2961617189@qq.com",
     location: "",
@@ -190,8 +190,8 @@ export const createEmptyResume = (id = 'yang-zhong-yuan-demo-id'): ResumeData =>
   workExperience: [
     {
       id: "work-1",
-      company: "上海得帆智能科技有限公司  -  前端研发",
-      position: "",
+      company: "上海得帆智能科技有限公司",
+      position: "前端研发工程师",
       startDate: "2022.06",
       endDate: "2026.05",
       description: "1. 负责需求评估与技术方案设计，参与团队日常需求评审与排期\n2. 日常产品需求的开发、bug修复以及性能优化\n3. 负责前端团队内工具链与组件库的开发维护\n4. 负责客户自开发方案设计"
@@ -200,22 +200,22 @@ export const createEmptyResume = (id = 'yang-zhong-yuan-demo-id'): ResumeData =>
   projects: [
     {
       id: "proj-1",
-      company: "得帆云低代码平台  -  核心开发",
-      position: "",
+      company: "得帆云低代码平台",
+      position: "核心开发",
       startDate: "2022.06",
       endDate: "2026.05",
       description: "**项目简介**：\n企业级低代码应用开发平台，支持通过可视化拖拽快速搭建业务应用。平台采用微内核架构，核心包括表单引擎、规则引擎、流程引擎、插件系统等模块，前端代码规模 **92 万行**，服务 **500+** 企业客户\n\n**技术栈**：Vue 2 + Vuex + TypeScript + Webpack + Babel + Element-UI + Vxe-Table + AntV X6\n\n**核心贡献**：\n- **设计并实现 DSL 规则引擎**：自研 **Babel 插件**将运算符重载，配合 **BigNumber.js** 实现零精度误差；通过 **`new Function()`** + 变量屏蔽隔离 **`window`/`document`** 实现受限执行；编译结果缓存复用，支撑 50+ 内置函数与复杂联动场景\n- **优化规则执行策略**：将「全量计算」改为「按**依赖图**触发」，建立字段依赖关系，结合 **300ms** 防抖批处理，经日志实测复杂场景性能提升 **80%**，解决客户反馈的 **3000+** 数据表单卡顿问题\n- **主导运行时性能优化**：针对钉钉消息审批场景表单打开慢的问题，通过 **Performance 面板**定位瓶颈，将表单配置、表单数据、业务事件三个串行请求改为 `Promise.all` 并行加载；修改缓存策略，结合 **LRU 缓存**高频接口响应，表单打开时间从 **7s 降至 3.5s（↑50%）**"
     },
     {
       id: "proj-2",
-      company: "得帆云低代码 aPaaS 平台 - 架构设计 & 核心开发",
-      position: "",
+      company: "得帆云低代码 aPaaS 平台",
+      position: "架构设计 & 核心开发",
       startDate: "2024.06",
       endDate: "2024.12",
       description: "**项目简介**：\n平台服务 **500+** 企业客户，不同租户需要差异化功能集合（钉钉集成、飞书集成、电子签名、数据加密等 20+ 业务模块），传统硬编码条件判断导致主包体积膨胀、功能无法热插拔。设计并实现前端插件化架构从根本上解决这一问题\n\n**技术栈**：JavaScript + Vue 2 + Rollup + IndexedDB\n\n**核心贡献**：\n- **引擎核心**：`ExtensionEngine` 单例统一管理插件全生命周期（`install` → `activate` → `inactivate` → `uninstall`）；每次状态变更通过 **md5** 签名触发响应式更新，驱动视图层自动重渲染，实现功能热插拔\n- **动态加载 + IndexedDB 缓存**：插件以独立 **JS/CSS** 产物形式部署，运行时动态创建 `<script>` 标签按需注入；引入 **IndexedDB** 作为本地缓存层，命中版本缓存时直接内联注入跳过网络请求，版本变更时自动更新缓存\n- **打包方案**：插件用 **Rollup** 独立打包为 **UMD 产物**，Vue / 平台公共库标记为 **`external`**，加载时直接复用宿主环境全局变量，避免重复打包\n- **HookManager 跨插件通信**：基于**发布-订阅**实现，`callHook` 广播并收集所有插件返回值；插件失效时自动注销订阅，避免内存泄漏\n- **栈式组件覆盖**：`ComponentsManager` 维护每个组件名的插件栈，后激活插件优先级更高；失效时自动弹出恢复下层组件，支持多层覆盖与无感回滚\n- **三层功能校验**：黑名单（运营全局禁用）→ 禁用状态（租户级关闭）→ 版本兼容，粒度细化到插件 → 模块 → 功能三级；后端通过响应头下发 **base64** 白名单，引擎自动计算差集生成黑名单"
     }
   ],
-  skills: "- 熟练运用 **Cursor/Codex/Claude** 等 AI 工具并融入日常研发工作流，实现 **30%+** 的开发与重构提效；具备 **AI** 应用与生态开发经验，熟悉 Skill、MCP、RAG、Agent 的设计与落地\n- **JavaScript** 基础扎实，深入理解原型链、闭包、Promise、事件循环、垃圾回收等核心机制，了解 **ts**，能够基于 **Babel AST** 开发编译器插件\n- 精通 **Vue 2/3** 全家桶，深度掌握响应式原理、虚拟 DOM diff 算法、组件通信机制等\n- 熟练掌握 **Webpack**/**Vite** 构建原理与 Loader/Plugin 开发，擅长前端工程化与性能优化（DLL/SplitChunks/懒加载/缓存策略）\n- 熟悉 **Performance** 面板分析 and **Web Vitals** 核心指标（**LCP/INP/CLS**），有多个性能优化落地案例\n- 熟悉 **HTTP** 协议（缓存策略、跨域、SSE），了解浏览器渲染机制与关键渲染路径优化\n- 有大型前端项目工程化体系建设经验，包括 **Sentry** 错误监控接入、**Monorepo** 多包管理",
+  skills: "- 熟练运用 **Cursor/Codex/Claude** 等 AI 工具并融入日常研发工作流，实现 **30%+** 的开发与重构提效；具备 **AI** 应用与生态开发经验，熟悉 Skill、MCP、RAG、Agent 的设计与落地\n- **JavaScript** 基础扎实，深入理解原型链、闭包、Promise、事件循环、垃圾回收等核心机制，熟悉 **TypeScript**，能够基于 **Babel AST** 开发编译器插件\n- 深入掌握 **Vue 3** 核心机制，理解基于 **Proxy** 的依赖收集流程；熟练运用 **Composition API** 进行逻辑抽离，并对 **PatchFlags（静态标记）**、静态提升等编译期优化及新版 **Diff 算法**有清晰的认知\n- 熟练掌握 **Webpack**/**Vite** 构建原理与 Loader/Plugin 开发，擅长前端工程化与性能优化（DLL/SplitChunks/懒加载/缓存策略）\n- 熟悉 **Performance** 面板分析及 **Web Vitals** 核心指标（**LCP/INP/CLS**），有多个性能优化落地案例\n- 熟悉 **HTTP** 协议（缓存策略、跨域、SSE），了解浏览器渲染机制与关键渲染路径优化\n- 有大型前端项目工程化体系建设经验，包括 **Sentry** 错误监控接入、**Monorepo** 多包管理",
   selfEvaluation: "",
   customSections: [
     {
@@ -231,7 +231,7 @@ export const createEmptyResume = (id = 'yang-zhong-yuan-demo-id'): ResumeData =>
       position: "Creator / 独立开发者",
       startDate: "2023.05",
       endDate: "2023.08",
-      description: "**项目链接**：`github.com/yangzhongyuan/mini-react` (1.2k Stars)\n\n**项目简介**：一个纯 TypeScript 实现 of React 核心功能子集，包含 Fiber 架构、双阶段协调 (Reconciliation) 算法、并发更新调度器与 Hooks API 运行时。\n\n**核心贡献**：\n- 基于原生 RequestIdleCallback 实现时分渲染调度器，保证主线程大计算量更新时的 UI 帧率在 55fps 以上。\n- 自研两阶段树协调算法，深度还原 DOM Diff 中单节点、多节点复用与删除的最佳路径算法，配合单元测试覆盖 92% 的核心逻辑。"
+      description: "**项目链接**：`github.com/yangzhongyuan/mini-react` (1.2k Stars)\n\n**项目简介**：一个纯 TypeScript 实现的 React 核心功能子集，包含 Fiber 架构、双阶段协调 (Reconciliation) 算法、并发更新调度器与 Hooks API 运行时。\n\n**核心贡献**：\n- 基于原生 RequestIdleCallback 实现时分渲染调度器，保证主线程大计算量更新时的 UI 帧率在 55fps 以上。\n- 自研两阶段树协调算法，深度还原 DOM Diff 中单节点、多节点复用与删除的最佳路径算法，配合单元测试覆盖 92% 的核心逻辑。"
     }
   ],
   competition: [
@@ -260,7 +260,7 @@ export const createEmptyResume = (id = 'yang-zhong-yuan-demo-id'): ResumeData =>
     {
       id: "lang-1",
       name: "英语",
-      level: "CET-6 580 分 ｜ 具备流畅 of 英文技术文档阅读与无障碍中英文邮件技术交流能力"
+      level: "CET-6 580 分 ｜ 具备流畅的英文技术文档阅读与无障碍中英文邮件技术交流能力"
     }
   ],
   certificate: [
@@ -298,7 +298,7 @@ export const createEmptyResume = (id = 'yang-zhong-yuan-demo-id'): ResumeData =>
   researchPublication: [
     {
       id: "pub-1",
-      name: "一种基于 Babel AST 的低代码规则计算引擎 of 计算引擎的构建方法及装置",
+      name: "一种基于 Babel AST 的低代码规则计算引擎的构建方法及装置",
       date: "2024.08",
       description: "**专利类型**：发明专利 ｜ 申请号：CN202410987654.3\n\n**详情**：\n- 本发明提供了一种能够安全隔离执行上下文，且提供高精度计算重载的规则解释引擎。本人为第一发明人，已随公司产品成功落地并服务数十个大型客户。"
     }
