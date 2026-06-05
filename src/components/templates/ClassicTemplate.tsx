@@ -122,10 +122,11 @@ export function getFlatElements(data: ResumeData): React.ReactElement[] {
           <SectionTitle title="工作经历" color={color} />
           <div className="resume-item">
             <div className="flex items-baseline justify-between">
-              <span className="font-semibold text-[0.88em]" style={{ whiteSpace: 'pre-wrap' }}>{workExperience[0].company}</span>
+              <span className="font-semibold text-[0.88em]" style={{ whiteSpace: 'pre-wrap' }}>
+                {workExperience[0].company}{workExperience[0].position ? ` - ${workExperience[0].position}` : ''}
+              </span>
               <DateRange start={workExperience[0].startDate} end={workExperience[0].endDate} />
             </div>
-            <div className="text-[0.82em] font-medium mb-1" style={{ color, whiteSpace: 'pre-wrap' }}>{workExperience[0].position}</div>
             <MdContent content={workExperience[0].description} />
           </div>
         </div>
@@ -135,10 +136,11 @@ export function getFlatElements(data: ResumeData): React.ReactElement[] {
         elements.push(
           <div key={`work-group-${w.id}`} className="resume-item mb-3">
             <div className="flex items-baseline justify-between">
-              <span className="font-semibold text-[0.88em]" style={{ whiteSpace: 'pre-wrap' }}>{w.company}</span>
+              <span className="font-semibold text-[0.88em]" style={{ whiteSpace: 'pre-wrap' }}>
+                {w.company}{w.position ? ` - ${w.position}` : ''}
+              </span>
               <DateRange start={w.startDate} end={w.endDate} />
             </div>
-            <div className="text-[0.82em] font-medium mb-1" style={{ color, whiteSpace: 'pre-wrap' }}>{w.position}</div>
             <MdContent content={w.description} />
           </div>
         );
@@ -151,10 +153,11 @@ export function getFlatElements(data: ResumeData): React.ReactElement[] {
           <SectionTitle title="项目经历" color={color} />
           <div className="resume-item">
             <div className="flex items-baseline justify-between">
-              <span className="font-semibold text-[0.88em]" style={{ whiteSpace: 'pre-wrap' }}>{projects[0].company}</span>
+              <span className="font-semibold text-[0.88em]" style={{ whiteSpace: 'pre-wrap' }}>
+                {projects[0].company}{projects[0].position ? ` - ${projects[0].position}` : ''}
+              </span>
               <DateRange start={projects[0].startDate} end={projects[0].endDate} />
             </div>
-            <div className="text-[0.82em] font-medium mb-1" style={{ color, whiteSpace: 'pre-wrap' }}>{projects[0].position}</div>
             <MdContent content={projects[0].description} />
           </div>
         </div>
@@ -164,10 +167,11 @@ export function getFlatElements(data: ResumeData): React.ReactElement[] {
         elements.push(
           <div key={`proj-group-${p.id}`} className="resume-item mb-3">
             <div className="flex items-baseline justify-between">
-              <span className="font-semibold text-[0.88em]" style={{ whiteSpace: 'pre-wrap' }}>{p.company}</span>
+              <span className="font-semibold text-[0.88em]" style={{ whiteSpace: 'pre-wrap' }}>
+                {p.company}{p.position ? ` - ${p.position}` : ''}
+              </span>
               <DateRange start={p.startDate} end={p.endDate} />
             </div>
-            <div className="text-[0.82em] font-medium mb-1" style={{ color, whiteSpace: 'pre-wrap' }}>{p.position}</div>
             <MdContent content={p.description} />
           </div>
         );
@@ -224,10 +228,11 @@ export function getFlatElements(data: ResumeData): React.ReactElement[] {
           <SectionTitle title="校园经历" color={color} />
           <div className="resume-item">
             <div className="flex items-baseline justify-between">
-              <span className="font-semibold text-[0.88em]" style={{ whiteSpace: 'pre-wrap' }}>{campusExperience[0].company}</span>
+              <span className="font-semibold text-[0.88em]" style={{ whiteSpace: 'pre-wrap' }}>
+                {campusExperience[0].company}{campusExperience[0].position ? ` - ${campusExperience[0].position}` : ''}
+              </span>
               <DateRange start={campusExperience[0].startDate} end={campusExperience[0].endDate} />
             </div>
-            <div className="text-[0.82em] font-medium mb-1" style={{ color, whiteSpace: 'pre-wrap' }}>{campusExperience[0].position}</div>
             <MdContent content={campusExperience[0].description} />
           </div>
         </div>
@@ -237,10 +242,11 @@ export function getFlatElements(data: ResumeData): React.ReactElement[] {
         elements.push(
           <div key={`campus-group-${c.id}`} className="resume-item mb-3">
             <div className="flex items-baseline justify-between">
-              <span className="font-semibold text-[0.88em]" style={{ whiteSpace: 'pre-wrap' }}>{c.company}</span>
+              <span className="font-semibold text-[0.88em]" style={{ whiteSpace: 'pre-wrap' }}>
+                {c.company}{c.position ? ` - ${c.position}` : ''}
+              </span>
               <DateRange start={c.startDate} end={c.endDate} />
             </div>
-            <div className="text-[0.82em] font-medium mb-1" style={{ color, whiteSpace: 'pre-wrap' }}>{c.position}</div>
             <MdContent content={c.description} />
           </div>
         );
@@ -253,10 +259,11 @@ export function getFlatElements(data: ResumeData): React.ReactElement[] {
           <SectionTitle title="培训经历" color={color} />
           <div className="resume-item">
             <div className="flex items-baseline justify-between">
-              <span className="font-semibold text-[0.88em]" style={{ whiteSpace: 'pre-wrap' }}>{trainingExperience[0].company}</span>
+              <span className="font-semibold text-[0.88em]" style={{ whiteSpace: 'pre-wrap' }}>
+                {trainingExperience[0].company}{trainingExperience[0].position ? ` - ${trainingExperience[0].position}` : ''}
+              </span>
               <DateRange start={trainingExperience[0].startDate} end={trainingExperience[0].endDate} />
             </div>
-            <div className="text-[0.82em] font-medium mb-1" style={{ color, whiteSpace: 'pre-wrap' }}>{trainingExperience[0].position}</div>
             <MdContent content={trainingExperience[0].description} />
           </div>
         </div>
@@ -266,10 +273,11 @@ export function getFlatElements(data: ResumeData): React.ReactElement[] {
         elements.push(
           <div key={`train-group-${t.id}`} className="resume-item mb-3">
             <div className="flex items-baseline justify-between">
-              <span className="font-semibold text-[0.88em]" style={{ whiteSpace: 'pre-wrap' }}>{t.company}</span>
+              <span className="font-semibold text-[0.88em]" style={{ whiteSpace: 'pre-wrap' }}>
+                {t.company}{t.position ? ` - ${t.position}` : ''}
+              </span>
               <DateRange start={t.startDate} end={t.endDate} />
             </div>
-            <div className="text-[0.82em] font-medium mb-1" style={{ color, whiteSpace: 'pre-wrap' }}>{t.position}</div>
             <MdContent content={t.description} />
           </div>
         );
@@ -282,10 +290,11 @@ export function getFlatElements(data: ResumeData): React.ReactElement[] {
           <SectionTitle title="开源项目与作品" color={color} />
           <div className="resume-item">
             <div className="flex items-baseline justify-between">
-              <span className="font-semibold text-[0.88em]" style={{ whiteSpace: 'pre-wrap' }}>{openSource[0].company}</span>
+              <span className="font-semibold text-[0.88em]" style={{ whiteSpace: 'pre-wrap' }}>
+                {openSource[0].company}{openSource[0].position ? ` - ${openSource[0].position}` : ''}
+              </span>
               <DateRange start={openSource[0].startDate} end={openSource[0].endDate} />
             </div>
-            <div className="text-[0.82em] font-medium mb-1" style={{ color, whiteSpace: 'pre-wrap' }}>{openSource[0].position}</div>
             <MdContent content={openSource[0].description} />
           </div>
         </div>
@@ -295,10 +304,11 @@ export function getFlatElements(data: ResumeData): React.ReactElement[] {
         elements.push(
           <div key={`os-group-${os.id}`} className="resume-item mb-3">
             <div className="flex items-baseline justify-between">
-              <span className="font-semibold text-[0.88em]" style={{ whiteSpace: 'pre-wrap' }}>{os.company}</span>
+              <span className="font-semibold text-[0.88em]" style={{ whiteSpace: 'pre-wrap' }}>
+                {os.company}{os.position ? ` - ${os.position}` : ''}
+              </span>
               <DateRange start={os.startDate} end={os.endDate} />
             </div>
-            <div className="text-[0.82em] font-medium mb-1" style={{ color, whiteSpace: 'pre-wrap' }}>{os.position}</div>
             <MdContent content={os.description} />
           </div>
         );
