@@ -81,6 +81,7 @@ function SectionTitle({
     } else if (style === 'watermark-bar') {
       return {
         ...baseStyle,
+        position: 'relative',
         width: '100%',
         background: `${color}0A`,
         borderLeft: `${height}px solid ${color}`,
