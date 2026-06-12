@@ -502,6 +502,87 @@ export default function Toolbar() {
                     </select>
                   </div>
                 </div>
+
+                {/* 标题装饰风格 */}
+                <div className="flex flex-col gap-1 mt-2">
+                  <label className="text-[11px] font-bold text-[var(--text-secondary)]">标题装饰风格</label>
+                  <select
+                    className="h-8 rounded-md border border-slate-200 bg-white px-2 text-xs text-[var(--text-primary)] focus:outline-none focus:border-[var(--primary)]"
+                    value={resume.theme.dividerStyle || 'left-bar'}
+                    onChange={(e) => updateTheme({ dividerStyle: e.target.value as any })}
+                  >
+                    <option value="left-bar">✨ 高端竖条</option>
+                    <option value="solid">经典横线</option>
+                    <option value="none">无装饰极简</option>
+                  </select>
+                </div>
+                
+                {/* 线条粗细与背景开关 (并排展示) */}
+                <div className="grid grid-cols-2 gap-3 mt-1">
+                  <div className="flex flex-col gap-1">
+                    <label className="text-[11px] font-bold text-[var(--text-secondary)]">
+                      {(resume.theme.dividerStyle || 'left-bar') === 'left-bar' ? '竖线宽度' : '横线粗细'}
+                    </label>
+                    <select
+                      className="h-8 rounded-md border border-slate-200 bg-white px-2 text-xs text-[var(--text-primary)] focus:outline-none focus:border-[var(--primary)]"
+                      value={resume.theme.dividerHeight ?? 4}
+                      onChange={(e) => updateTheme({ dividerHeight: Number(e.target.value) })}
+                    >
+                      {[1, 2, 3, 4, 5, 6].map((w) => (
+                        <option key={w} value={w}>{w}px</option>
+                      ))}
+                    </select>
+                  </div>
+                
+                  {(resume.theme.dividerStyle || 'left-bar') === 'left-bar' && (
+                    <div className="flex flex-col gap-1">
+                      <label className="text-[11px] font-bold text-[var(--text-secondary)]">标题底色</label>
+                      <div className="flex items-center h-8">
+                        <button
+                          onClick={() => updateTheme({ enableTitleBg: !resume.theme.enableTitleBg })}
+                          className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                            resume.theme.enableTitleBg ? 'bg-[var(--primary)]' : 'bg-slate-200'
+                          }`}
+                        >
+                          <span
+                            className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                              resume.theme.enableTitleBg ? 'translate-x-4' : 'translate-x-0'
+                            }`}
+                          />
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+                
+                {/* 模块间距 & 行高倍数 */}
+                <div className="grid grid-cols-2 gap-3 mt-1">
+                  <div className="flex flex-col gap-1">
+                    <label className="text-[11px] font-bold text-[var(--text-secondary)]">模块间距</label>
+                    <select
+                      className="h-8 rounded-md border border-slate-200 bg-white px-2 text-xs text-[var(--text-primary)] focus:outline-none focus:border-[var(--primary)]"
+                      value={resume.theme.sectionGap}
+                      onChange={(e) => updateTheme({ sectionGap: Number(e.target.value) })}
+                    >
+                      {[8, 12, 16, 20, 24, 28].map((g) => (
+                        <option key={g} value={g}>{g}px</option>
+                      ))}
+                    </select>
+                  </div>
+                
+                  <div className="flex flex-col gap-1">
+                    <label className="text-[11px] font-bold text-[var(--text-secondary)]">文本行高</label>
+                    <select
+                      className="h-8 rounded-md border border-slate-200 bg-white px-2 text-xs text-[var(--text-primary)] focus:outline-none focus:border-[var(--primary)]"
+                      value={resume.theme.lineHeight}
+                      onChange={(e) => updateTheme({ lineHeight: Number(e.target.value) })}
+                    >
+                      {[1.4, 1.5, 1.6, 1.7, 1.8, 1.9, 2.0].map((lh) => (
+                        <option key={lh} value={lh}>{lh.toFixed(1)}倍</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
               </div>
             </>
           )}
