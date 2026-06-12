@@ -29,6 +29,9 @@ export default function Toolbar() {
   
   const style = resume.theme.dividerStyle || 'left-bar';
   const isVerticalStyle = style === 'left-bar' || style === 'watermark-bar';
+  const isCustomColor = !THEME_COLORS.some(
+    (c) => c.value.toLowerCase() === (resume.theme.primaryColor || '#7C3AED').toLowerCase()
+  );
   
   const [downloading, setDownloading] = useState(false);
   const [exportingImage, setExportingImage] = useState(false);
@@ -43,6 +46,7 @@ export default function Toolbar() {
   const [editingResumeId, setEditingResumeId] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const colorInputRef = useRef<HTMLInputElement>(null);
 
   const handleCreateNew = () => {
     createResume();
@@ -460,7 +464,7 @@ export default function Toolbar() {
                 {/* 主题色 */}
                 <div className="space-y-1.5">
                   <label className="text-[11px] font-bold text-[var(--text-secondary)]">主题颜色</label>
-                  <div className="grid grid-cols-6 gap-1.5">
+                  <div className="grid grid-cols-8 gap-1.5 items-center">
                     {THEME_COLORS.map((c) => (
                       <button
                         key={c.value}
@@ -474,6 +478,28 @@ export default function Toolbar() {
                         }}
                       />
                     ))}
+
+                    {/* 自定义颜色按钮 */}
+                    <div className="relative w-6 h-6 flex items-center justify-center">
+                      <button
+                        title="自定义颜色"
+                        onClick={() => colorInputRef.current?.click()}
+                        className="w-6 h-6 rounded-full border-2 transition-all hover:scale-110 active:scale-95 cursor-pointer flex items-center justify-center bg-gradient-to-tr from-indigo-500 via-purple-500 to-pink-500 text-white"
+                        style={{
+                          borderColor: isCustomColor ? (resume.theme.primaryColor || '#7C3AED') : 'transparent',
+                          boxShadow: isCustomColor ? `0 0 0 2px white, 0 0 0 3px ${resume.theme.primaryColor || '#7C3AED'}` : undefined,
+                        }}
+                      >
+                        <Plus size={12} className="stroke-[3]" />
+                      </button>
+                      <input
+                        ref={colorInputRef}
+                        type="color"
+                        value={resume.theme.primaryColor || '#7C3AED'}
+                        onChange={(e) => updateTheme({ primaryColor: e.target.value })}
+                        className="absolute inset-0 opacity-0 w-0 h-0 pointer-events-none"
+                      />
+                    </div>
                   </div>
                 </div>
 
