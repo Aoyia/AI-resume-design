@@ -1,6 +1,27 @@
 import type { Metadata } from 'next';
+import { Inter, Noto_Sans_SC, Noto_Serif_SC } from 'next/font/google';
 import './globals.css';
 import '@arco-design/web-react/dist/css/arco.css';
+
+const inter = Inter({
+  subsets: ['latin'],
+  variable: '--font-inter',
+  display: 'swap',
+});
+
+const notoTabs = Noto_Sans_SC({
+  subsets: ['latin'],
+  weight: ['400', '500', '700'],
+  variable: '--font-noto-sans',
+  display: 'swap',
+});
+
+const notoSerif = Noto_Serif_SC({
+  subsets: ['latin'],
+  weight: ['400', '600'],
+  variable: '--font-noto-serif',
+  display: 'swap',
+});
 
 export const metadata: Metadata = {
   title: '简历制作·源 — 在线免费制作专业简历',
@@ -9,16 +30,9 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="zh-CN">
-      <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link
-          href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&family=Noto+Serif+SC:wght@400;600&display=swap"
-          rel="stylesheet"
-        />
-      </head>
+    <html lang="zh-CN" className={`${inter.variable} ${notoTabs.variable} ${notoSerif.variable}`}>
       <body>{children}</body>
     </html>
   );
 }
+

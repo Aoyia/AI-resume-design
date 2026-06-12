@@ -67,19 +67,55 @@ const CONFIG: Record<Mode, {
   },
 };
 
-function SortableExperienceItem({
-  item, mode, onUpdate, onRemove,
+import { memo } from 'react';
+
+const SortableExperienceItem = memo(function SortableExperienceItem({
+  id, mode,
 }: {
-  item: ExperienceItem;
+  id: string;
   mode: Mode;
-  onUpdate: (patch: Partial<ExperienceItem>) => void;
-  onRemove: () => void;
 }) {
+  const isWork = mode === 'work';
+  const isProject = mode === 'project';
+  const isCampus = mode === 'campus';
+  const isTraining = mode === 'training';
+
+  const item = useResumeStore((s) => {
+    const list = isWork
+      ? s.resume.workExperience
+      : isProject
+      ? s.resume.projects
+      : isCampus
+      ? s.resume.campusExperience
+      : isTraining
+      ? s.resume.trainingExperience
+      : s.resume.openSource;
+    return list.find((i) => i.id === id);
+  });
+
+  const update = useResumeStore((s) => {
+    if (isWork) return s.updateWorkExperience;
+    if (isProject) return s.updateProject;
+    if (isCampus) return s.updateCampusExperience;
+    if (isTraining) return s.updateTrainingExperience;
+    return s.updateOpenSource;
+  });
+
+  const remove = useResumeStore((s) => {
+    if (isWork) return s.removeWorkExperience;
+    if (isProject) return s.removeProject;
+    if (isCampus) return s.removeCampusExperience;
+    if (isTraining) return s.removeTrainingExperience;
+    return s.removeOpenSource;
+  });
+
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
-    useSortable({ id: item.id });
+    useSortable({ id });
 
   const style = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.5 : 1 };
   const cfg = CONFIG[mode];
+
+  if (!item) return null;
 
   return (
     <div ref={setNodeRef} style={style} className="rounded-lg border border-[var(--border)] bg-[var(--surface)] p-3 space-y-2">
@@ -88,34 +124,34 @@ function SortableExperienceItem({
           <GripVertical size={16} />
         </button>
         <span className="text-xs text-[var(--text-muted)] flex-1">拖拽排序</span>
-        <Button variant="danger" size="sm" onClick={onRemove}><Trash2 size={13} /></Button>
+        <Button variant="danger" size="sm" onClick={() => remove(id)}><Trash2 size={13} /></Button>
       </div>
 
       <div className="grid grid-cols-2 gap-2">
         <Input
           label={cfg.companyLabel}
           value={item.company}
-          onChange={(e) => onUpdate({ company: e.target.value })}
+          onChange={(e) => update(id, { company: e.target.value })}
           placeholder={cfg.companyPlaceholder}
           className="col-span-2"
         />
         <Input
           label={cfg.positionLabel}
           value={item.position}
-          onChange={(e) => onUpdate({ position: e.target.value })}
+          onChange={(e) => update(id, { position: e.target.value })}
           placeholder={cfg.positionPlaceholder}
           className="col-span-2"
         />
         <MonthPicker
           label="开始时间"
           value={item.startDate}
-          onChange={(val) => onUpdate({ startDate: val })}
+          onChange={(val) => update(id, { startDate: val })}
           placeholder="2022.06"
         />
         <MonthPicker
           label="结束时间"
           value={item.endDate}
-          onChange={(val) => onUpdate({ endDate: val })}
+          onChange={(val) => update(id, { endDate: val })}
           placeholder="至今"
           showPresent
         />
@@ -124,13 +160,13 @@ function SortableExperienceItem({
         label={cfg.descLabel}
         hint="支持 Markdown"
         value={item.description}
-        onChange={(e) => onUpdate({ description: e.target.value })}
+        onChange={(e) => update(id, { description: e.target.value })}
         rows={5}
         placeholder={cfg.descPlaceholder}
       />
     </div>
   );
-}
+});
 
 export default function ExperienceForm({ mode }: { mode: Mode }) {
   const isWork = mode === 'work';
@@ -152,22 +188,6 @@ export default function ExperienceForm({ mode }: { mode: Mode }) {
     if (isCampus) return s.addCampusExperience;
     if (isTraining) return s.addTrainingExperience;
     return s.addOpenSource;
-  });
-
-  const update = useResumeStore((s) => {
-    if (isWork) return s.updateWorkExperience;
-    if (isProject) return s.updateProject;
-    if (isCampus) return s.updateCampusExperience;
-    if (isTraining) return s.updateTrainingExperience;
-    return s.updateOpenSource;
-  });
-
-  const remove = useResumeStore((s) => {
-    if (isWork) return s.removeWorkExperience;
-    if (isProject) return s.removeProject;
-    if (isCampus) return s.removeCampusExperience;
-    if (isTraining) return s.removeTrainingExperience;
-    return s.removeOpenSource;
   });
 
   const reorder = useResumeStore((s) => {
@@ -202,9 +222,7 @@ export default function ExperienceForm({ mode }: { mode: Mode }) {
         <SortableContext items={items.map((i) => i.id)} strategy={verticalListSortingStrategy}>
           {items.map((item) => (
             <SortableExperienceItem
-              key={item.id} item={item} mode={mode}
-              onUpdate={(p) => update(item.id, p)}
-              onRemove={() => remove(item.id)}
+              key={item.id} id={item.id} mode={mode}
             />
           ))}
         </SortableContext>

@@ -60,7 +60,7 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         disabled={disabled}
         htmlType={type}
         className={cn(
-          '!inline-flex !items-center !justify-center gap-1.5 whitespace-nowrap',
+          '!inline-flex !items-center !justify-center gap-1.5 whitespace-nowrap active:scale-95 transition-all duration-150',
           className
         )}
         {...(props as any)}

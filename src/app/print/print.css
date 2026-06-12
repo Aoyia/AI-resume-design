@@ -2,7 +2,7 @@
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
 html, body {
-  width: 210mm;
+  width: 794px;
   background: white;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -10,9 +10,9 @@ html, body {
 }
 
 .print-page-container {
-  width: 210mm;
-  height: 297mm;
-  padding: 13mm 14mm; /* 对应网页端的 48px 52px */
+  width: 794px;
+  height: 1123px;
+  padding: 48px 52px; /* 对应网页端的 48px 52px */
   background: white;
   box-sizing: border-box;
   overflow: hidden;
@@ -26,8 +26,8 @@ html, body {
   }
 
   html, body {
-    width: 210mm;
-    height: auto;
+    width: 794px;
+    height: 1123px;
     background: white;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
@@ -35,11 +35,13 @@ html, body {
   }
 
   .print-page-container {
-    width: 210mm;
-    height: 297mm;
+    width: 794px;
+    height: 1123px;
+    padding: 48px 52px;
     page-break-after: always !important;
     break-after: page !important;
     overflow: hidden;
+    box-sizing: border-box;
   }
 
   .print-page-container:last-child {
@@ -53,3 +55,4 @@ html, body {
     print-color-adjust: exact !important;
   }
 }
+

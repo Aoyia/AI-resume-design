@@ -64,16 +64,16 @@ export default function EditorPage() {
         <div
           ref={resizerRef}
           onMouseDown={onMouseDown}
-          className="group relative w-1 shrink-0 bg-[var(--border)] hover:bg-blue-400 transition-colors duration-150 cursor-col-resize z-10 flex items-center justify-center"
+          className="group relative w-1 shrink-0 bg-[var(--border)] hover:bg-[var(--primary)] transition-colors duration-150 cursor-col-resize z-10 flex items-center justify-center"
           title="拖动以调整面板宽度"
         >
           {/* 拖动时的高亮指示条 */}
           <div className="absolute inset-y-0 -left-1 -right-1" />
           {/* 中央拖动把手点 */}
           <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-150 flex flex-col gap-0.5 pointer-events-none">
-            <div className="w-1 h-1 rounded-full bg-blue-500" />
-            <div className="w-1 h-1 rounded-full bg-blue-500" />
-            <div className="w-1 h-1 rounded-full bg-blue-500" />
+            <div className="w-1 h-1 rounded-full bg-[var(--primary)]" />
+            <div className="w-1 h-1 rounded-full bg-[var(--primary)]" />
+            <div className="w-1 h-1 rounded-full bg-[var(--primary)]" />
           </div>
         </div>
 

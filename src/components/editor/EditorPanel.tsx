@@ -2,6 +2,7 @@
 
 import { useResumeStore } from '@/store/useResumeStore';
 import Accordion from '@/components/ui/Accordion';
+import { cn } from '@/lib/utils';
 import BasicInfoForm from './BasicInfoForm';
 import EducationForm from './EducationForm';
 import ExperienceForm from './ExperienceForm';
@@ -52,8 +53,8 @@ function SortableSection({ id }: { id: SectionKey }) {
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
-    opacity: isDragging ? 0.4 : 1,
-    zIndex: isDragging ? 10 : 'auto',
+    opacity: isDragging ? 0.6 : 1,
+    zIndex: isDragging ? 50 : 'auto',
   };
 
   const dragHandle = (
@@ -109,7 +110,14 @@ function SortableSection({ id }: { id: SectionKey }) {
   ) : undefined;
 
   return (
-    <div ref={setNodeRef} style={style}>
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={cn(
+        "transition-all duration-200 rounded-[var(--radius-md)]",
+        isDragging && "scale-[1.02] shadow-2xl ring-1 ring-[var(--primary)]/20 z-50 bg-white"
+      )}
+    >
       <Accordion
         title={title}
         defaultOpen={id === 'basicInfo'}
@@ -161,14 +169,14 @@ export default function EditorPanel() {
 
       {/* 添加更多模块区 */}
       {(hiddenDev.length > 0 || hiddenCommon.length > 0) && (
-        <div className="pt-6 border-t border-slate-100 mt-6 space-y-4 pb-2 shrink-0">
+        <div className="pt-6 border-t border-[var(--border)] mt-6 space-y-4 pb-2 shrink-0">
           <h4 className="text-xs font-bold text-[var(--text-primary)] select-none">添加更多模块</h4>
           
           {/* 程序员专属推荐 */}
           {hiddenDev.length > 0 && (
             <div className="space-y-1.5">
               <div className="flex items-center gap-1.5">
-                <span className="text-[10px] font-bold text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded">技术特化</span>
+                <span className="text-[10px] font-bold text-pink-600 bg-pink-50/70 px-1.5 py-0.5 rounded">技术特化</span>
                 <span className="text-[10px] text-slate-400">程序员简历核心推荐</span>
               </div>
               <div className="flex flex-wrap gap-1.5">
@@ -176,7 +184,7 @@ export default function EditorPanel() {
                   <button
                     key={key}
                     onClick={() => addSectionToOrder(key)}
-                    className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50/50 active:bg-indigo-50 border border-dashed border-indigo-200 hover:border-indigo-300 cursor-pointer select-none rounded-lg transition-colors duration-150 focus:outline-none"
+                    className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold text-pink-600 hover:text-pink-700 hover:bg-pink-50/60 active:bg-pink-100/80 active:scale-95 border border-dashed border-pink-200 hover:border-pink-300 cursor-pointer select-none rounded-lg transition-all duration-150 focus:outline-none"
                   >
                     <Plus size={12} />
                     {SECTION_CONFIG[key].title}
@@ -195,7 +203,7 @@ export default function EditorPanel() {
                   <button
                     key={key}
                     onClick={() => addSectionToOrder(key)}
-                    className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold text-blue-600 hover:text-blue-700 hover:bg-blue-50/50 active:bg-blue-50 border border-dashed border-blue-200 hover:border-blue-300 cursor-pointer select-none rounded-lg transition-colors duration-150 focus:outline-none"
+                    className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold text-[var(--primary)] hover:text-[var(--primary-hover)] hover:bg-[var(--primary-light)]/40 active:bg-[var(--primary-light)]/80 active:scale-95 border border-dashed border-[var(--border)] hover:border-[var(--primary)] cursor-pointer select-none rounded-lg transition-all duration-150 focus:outline-none"
                   >
                     <Plus size={12} />
                     {SECTION_CONFIG[key].title}

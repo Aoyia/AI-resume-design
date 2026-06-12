@@ -25,6 +25,8 @@ interface ResumeStore {
   resume: ResumeData;
   resumes: ResumeData[];
   currentResumeId: string;
+  pages: number[][];
+  setPages: (pages: number[][]) => void;
   switchResume: (id: string) => void;
   createResume: (name?: string) => void;
   deleteResume: (id: string) => void;
@@ -212,6 +214,8 @@ export const useResumeStore = create<ResumeStore>()(
   persist(
     syncResumesMiddleware((set) => ({
       resume: createEmptyResume(),
+      pages: [],
+      setPages: (pages) => set({ pages }),
 
       // 主题
       updateTheme: (patch) =>
@@ -696,6 +700,10 @@ export const useResumeStore = create<ResumeStore>()(
     })),
     {
       name: 'resume_local_draft',
+      partialize: (state) => {
+        const { pages, ...rest } = state;
+        return rest;
+      },
       onRehydrateStorage: () => (state) => {
         if (state) {
           // 自动清洗已加载数据中技术栈的加粗词
@@ -724,3 +732,8 @@ export const useResumeStore = create<ResumeStore>()(
     }
   )
 );
+
+if (typeof window !== 'undefined') {
+  (window as any).__store__ = useResumeStore;
+}
+

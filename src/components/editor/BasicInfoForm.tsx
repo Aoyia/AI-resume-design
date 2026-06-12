@@ -88,8 +88,8 @@ export default function BasicInfoForm() {
           onDrop={handleDrop}
           onClick={() => fileInputRef.current?.click()}
           className={`relative w-20 h-28 shrink-0 rounded-lg border-2 border-dashed flex flex-col items-center justify-center cursor-pointer transition-all duration-200 overflow-hidden group select-none
-            ${info.avatar ? 'border-slate-200' : 'border-slate-300 hover:border-blue-400 hover:bg-blue-50/20'}
-            ${isDragActive ? 'border-blue-500 bg-blue-50/40' : ''}`}
+            ${info.avatar ? 'border-slate-200' : 'border-[var(--border)] hover:border-[var(--primary)] hover:bg-[var(--primary-light)]/20'}
+            ${isDragActive ? 'border-[var(--primary)] bg-[var(--primary-light)]/40' : ''}`}
         >
           {info.avatar ? (
             <>
@@ -101,7 +101,7 @@ export default function BasicInfoForm() {
               </div>
             </>
           ) : (
-            <div className="text-center p-2 flex flex-col items-center text-slate-400 group-hover:text-blue-500">
+            <div className="text-center p-2 flex flex-col items-center text-slate-400 group-hover:text-[var(--primary)]">
               <Upload size={18} className="mb-1" />
               <span className="text-[10px] font-semibold">上传照片</span>
               <span className="text-[8px] text-slate-400 mt-0.5">支持拖拽</span>
@@ -129,7 +129,7 @@ export default function BasicInfoForm() {
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
-              className="px-2.5 py-1 text-xs font-semibold text-blue-600 hover:text-blue-700 hover:bg-blue-50 bg-white border border-blue-200 rounded-lg cursor-pointer transition-colors"
+              className="px-2.5 py-1 text-xs font-semibold text-[var(--primary)] hover:text-[var(--primary-hover)] hover:bg-[var(--primary-light)]/40 active:scale-95 bg-white border border-[var(--border)] rounded-lg cursor-pointer transition-all duration-150"
             >
               本地上传
             </button>
@@ -137,7 +137,7 @@ export default function BasicInfoForm() {
               <button
                 type="button"
                 onClick={() => updateBasicInfo({ avatar: '' })}
-                className="px-2.5 py-1 text-xs font-semibold text-red-600 hover:text-red-700 hover:bg-red-50 bg-white border border-red-200 rounded-lg cursor-pointer transition-colors flex items-center gap-1"
+                className="px-2.5 py-1 text-xs font-semibold text-red-600 hover:text-red-700 hover:bg-red-50 active:scale-95 bg-white border border-red-200 rounded-lg cursor-pointer transition-all duration-150 flex items-center gap-1"
               >
                 <Trash2 size={12} />
                 清除照片
@@ -156,7 +156,7 @@ export default function BasicInfoForm() {
               value={info.avatar?.startsWith('data:') ? '' : (info.avatar || '')}
               onChange={(e) => updateBasicInfo({ avatar: e.target.value })}
               placeholder="https://example.com/photo.jpg"
-              className="w-full text-xs px-2 py-1 border border-slate-200 rounded-lg focus:outline-none focus:border-blue-400 placeholder:text-slate-300"
+              className="w-full text-xs px-2 py-1 border border-[var(--border)] rounded-lg focus:outline-none focus:border-[var(--primary)] placeholder:text-slate-300"
             />
           </div>
         </div>

@@ -142,7 +142,7 @@ export type SectionKey =
 // ─── 默认值 ─────────────────────────────────────────────────
 export const DEFAULT_THEME: ResumeTheme = {
   templateId: 'classic',
-  primaryColor: '#2563EB',
+  primaryColor: '#7C3AED',
   fontFamily: 'Noto Sans SC',
   fontSize: 14,
   lineHeight: 1.6,
@@ -161,7 +161,7 @@ export const createEmptyResume = (id = 'yang-zhong-yuan-demo-id'): ResumeData =>
   id,
   theme: {
     templateId: "classic",
-    primaryColor: "#2563EB",
+    primaryColor: "#7C3AED",
     fontFamily: "Noto Sans SC",
     fontSize: 14,
     lineHeight: 1.6,

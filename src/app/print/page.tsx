@@ -1,7 +1,7 @@
 'use client';
 
 import { ResumeData } from '@/types/resume';
-import ClassicTemplate, { getFlatElements } from '@/components/templates/ClassicTemplate';
+import ClassicTemplate, { getFlatElements, FONT_FALLBACKS } from '@/components/templates/ClassicTemplate';
 import { useEffect, useRef, useState } from 'react';
 import './print.css';
 
@@ -9,8 +9,8 @@ const A4_W = 794;
 const A4_H = 1123;
 const A4_PADDING_Y = 48;
 const A4_CONTENT_H = A4_H - A4_PADDING_Y * 2;
+const A4_SAFE_CONTENT_H = A4_CONTENT_H - 8; // 8px 安全缓冲区，防止临界渲染超高
 
-/** 打印专用路由页面，由 Puppeteer 在服务端访问并截图为 PDF */
 export default function PrintPage({
   searchParams,
 }: {
@@ -21,14 +21,23 @@ export default function PrintPage({
   const [isReady, setIsReady] = useState(false);
   const measureRef = useRef<HTMLDivElement>(null);
 
-  // 客户端获取临时数据
+  // 1. 客户端获取临时数据
   useEffect(() => {
     if (searchParams.id) {
       fetch(`/api/pdf/data?id=${searchParams.id}`)
         .then((res) => res.json())
         .then((data) => {
           if (data && !data.error) {
-            setResume(data);
+            if (data.resume) {
+              setResume(data.resume);
+              if (data.pages) {
+                setPages(data.pages);
+                setIsReady(true);
+              }
+            } else {
+              // 兼容老数据结构
+              setResume(data);
+            }
           }
         })
         .catch((err) => {
@@ -37,19 +46,19 @@ export default function PrintPage({
     }
   }, [searchParams.id]);
 
-  // 动态测量高度并分页
+  // 2. 动态测量高度并分页 (仅作为未传 pages 时的兜底降级方案)
   useEffect(() => {
     if (!resume) return;
+    if (pages.length > 0 && isReady) return;
 
-    const timer = setTimeout(() => {
+    // 确保字体加载完毕后再进行测量，极度关键！
+    const doMeasure = () => {
       if (!measureRef.current) return;
 
       const children = Array.from(measureRef.current.children);
       const heights = children.map((child) => {
-        const style = window.getComputedStyle(child);
-        const marginTop = parseFloat(style.marginTop || '0');
-        const marginBottom = parseFloat(style.marginBottom || '0');
-        return child.getBoundingClientRect().height + marginTop + marginBottom;
+        const marginTop = parseFloat((child as HTMLElement).style.marginTop || '0');
+        return child.getBoundingClientRect().height + marginTop;
       });
 
       let currentPage: number[] = [];
@@ -58,7 +67,37 @@ export default function PrintPage({
 
       for (let i = 0; i < children.length; i++) {
         const h = heights[i];
-        if (currentHeight + h > A4_CONTENT_H && currentPage.length > 0) {
+        const child = children[i];
+        const type = child.getAttribute('data-type');
+        const group = child.getAttribute('data-group');
+
+        // 预判是否超出可用高度
+        let shouldBreak = (currentHeight + h > A4_SAFE_CONTENT_H);
+
+        // 如果没有超出，但需要进行 Orphan 保护
+        if (!shouldBreak && currentPage.length > 0) {
+          // 保护 1：模块大标题
+          if (type === 'section-title') {
+            const nextH = heights[i + 1] || 0;
+            if (currentHeight + h + nextH > A4_SAFE_CONTENT_H) {
+              shouldBreak = true;
+            }
+          }
+          // 保护 2：经历项头部
+          else if (type === 'item-header' && group) {
+            const nextChild = children[i + 1];
+            const nextGroup = nextChild?.getAttribute('data-group');
+            const nextType = nextChild?.getAttribute('data-type');
+            if (nextChild && nextGroup === group && nextType === 'item-desc') {
+              const nextH = heights[i + 1] || 0;
+              if (currentHeight + h + nextH > A4_SAFE_CONTENT_H) {
+                shouldBreak = true;
+              }
+            }
+          }
+        }
+
+        if (shouldBreak && currentPage.length > 0) {
           computedPages.push(currentPage);
           currentPage = [i];
           currentHeight = h;
@@ -73,10 +112,28 @@ export default function PrintPage({
 
       setPages(computedPages);
       setIsReady(true);
-    }, 100);
+    };
 
-    return () => clearTimeout(timer);
-  }, [resume]);
+    // 等待 fonts ready 并加上轻微延时以保证 React DOM 树完全渲染稳定
+    let measureCalled = false;
+    const safeMeasure = () => {
+      if (measureCalled) return;
+      measureCalled = true;
+      doMeasure();
+    };
+
+    if (typeof document !== 'undefined' && document.fonts) {
+      Promise.race([
+        document.fonts.ready,
+        new Promise((resolve) => setTimeout(resolve, 500))
+      ]).then(() => {
+        setTimeout(safeMeasure, 50);
+      });
+    } else {
+      setTimeout(safeMeasure, 100);
+    }
+  }, [resume, pages, isReady]);
+
 
   if (!resume) {
     return <div style={{ padding: 40, background: 'white' }}>正在加载简历数据...</div>;
@@ -84,26 +141,29 @@ export default function PrintPage({
 
   const flatElements = getFlatElements(resume);
   const displayPages = pages.length > 0 ? pages : [Array.from({ length: flatElements.length }, (_, i) => i)];
+  const fontFamilyValue = FONT_FALLBACKS[resume.theme.fontFamily] || resume.theme.fontFamily;
 
   return (
     <div className="print-wrapper" data-ready={isReady ? 'true' : 'false'}>
-      {/* 隐藏的测量沙盒 */}
+      {/* 隐藏的测量沙盒 - 必须与 PreviewPanel 中以及真实 print-page-container 的尺寸和 padding 完全一致 */}
       <div
         ref={measureRef}
-        className="absolute opacity-0 pointer-events-none"
+        className="absolute opacity-0 pointer-events-none break-all tracking-wide text-gray-800"
         style={{
           width: A4_W,
           padding: '48px 52px',
           left: -9999,
           top: -9999,
-          fontFamily: resume.theme.fontFamily,
+          fontFamily: fontFamilyValue,
           fontSize: `${resume.theme.fontSize}px`,
+          lineHeight: resume.theme.lineHeight,
+          boxSizing: 'border-box',
         }}
       >
         {flatElements}
       </div>
 
-      {/* 真实分页打印 */}
+      {/* 真实分页打印 - 使用 px 强制控制尺寸 */}
       {displayPages.map((indices, pageIdx) => (
         <div key={pageIdx} className="print-page-container">
           <ClassicTemplate data={resume} elementIndices={indices} />

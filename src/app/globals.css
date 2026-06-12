@@ -1,24 +1,26 @@
+@import url('https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,300;0,400;0,500;0,700;1,400&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 /* ─── 设计 Token ── */
 :root {
-  --primary: #2563EB;
-  --primary-hover: #1D4ED8;
-  --primary-light: #EFF6FF;
+  --primary: #7C3AED;
+  --primary-hover: #6D28D9;
+  --primary-light: #F3E8FF;
 
-  --surface: #F8FAFC;       /* 页面背景 */
+  --surface: #F8FAFC;       /* 页面背景（恢复为默认浅白灰色） */
   --panel: #FFFFFF;         /* 面板背景（编辑区、预览纸张） */
-  --border: #E2E8F0;
-  --border-focus: #93C5FD;
+  --border: #E2E8F0;        /* 恢复为原默认淡灰色边框 */
+  --border-focus: #C084FC;
 
   --text-primary: #1E293B;
   --text-secondary: #64748B;
   --text-muted: #94A3B8;
 
-  --shadow-sm: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
-  --shadow-card: 0 4px 24px rgba(0,0,0,0.08);
+  --shadow-sm: 0 1px 3px rgba(124,58,237,0.03), 0 1px 2px rgba(124,58,237,0.02);
+  --shadow-card: 0 4px 24px rgba(124,58,237,0.05);
   --shadow-paper: 0 8px 40px rgba(0,0,0,0.12);
 
   --radius-sm: 6px;
@@ -40,7 +42,7 @@ html, body {
 body {
   background: var(--surface);
   color: var(--text-primary);
-  font-family: 'Inter', 'Noto Sans SC', system-ui, -apple-system, sans-serif;
+  font-family: 'Roboto', 'Inter', 'Noto Sans SC', system-ui, -apple-system, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   font-size: 15px;
@@ -109,5 +111,12 @@ body {
 }
 .arco-picker-suffix {
   color: var(--text-muted) !important;
+}
+
+/* ─── 消除头部操作按钮点击时的聚焦外边框 ── */
+header button:focus,
+header button:focus-visible {
+  outline: none !important;
+  box-shadow: none !important;
 }
 

@@ -8,17 +8,19 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
     let resumeData;
+    let pagesData;
     let format = 'pdf';
 
     // 兼具兼容性：解析传入的数据
     if (body && body.resume) {
       resumeData = body.resume;
+      pagesData = body.pages;
       format = body.format || 'pdf';
     } else {
       resumeData = body;
     }
 
-    resumeTempStore.set(id, resumeData);
+    resumeTempStore.set(id, { resume: resumeData, pages: pagesData });
 
     // 动态引入 puppeteer（避免在 Edge Runtime 报错）
     const puppeteer = await import('puppeteer');
@@ -36,16 +38,25 @@ export async function POST(req: NextRequest) {
     const page = await browser.newPage();
 
     // 构建打印路由 URL，将简历数据通过 ID 传入
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+    // 动态获取当前请求 of origin，解决本地运行端口被占用（如 3001, 3002）导致 puppeteer 无法连接正确端口的问题
+    let baseUrl = process.env.NEXT_PUBLIC_BASE_URL || req.nextUrl.origin;
+    if (baseUrl.includes('localhost')) {
+      baseUrl = baseUrl.replace('localhost', '127.0.0.1');
+    }
     const url = `${baseUrl}/print?id=${id}`;
 
-    await page.goto(url, { waitUntil: 'networkidle0', timeout: 30000 });
+    await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 15000 });
 
     // 等待页面进行真实的 A4 DOM 分页测量就绪
-    await page.waitForSelector('[data-ready="true"]', { timeout: 10000 });
+    await page.waitForSelector('[data-ready="true"]', { timeout: 15000 });
 
-    // 等待字体加载完毕
-    await page.evaluateHandle('document.fonts.ready');
+    // 安全等待字体准备就绪，最长等待 1000ms，以防外部网络字体加载被卡死
+    await page.evaluate(() => {
+      return Promise.race([
+        document.fonts ? document.fonts.ready : Promise.resolve(),
+        new Promise((resolve) => setTimeout(resolve, 1000))
+      ]);
+    });
 
     if (format === 'image') {
       // 4倍超清 Retina 级别物理分辨率，极致清晰

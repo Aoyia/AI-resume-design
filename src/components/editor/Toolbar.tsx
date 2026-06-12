@@ -5,8 +5,10 @@ import { useState, useEffect, useRef } from 'react';
 import { useResumeStore } from '@/store/useResumeStore';
 import { useAuthStore } from '@/store/useAuthStore';
 import LoginModal from './LoginModal';
+import { cn } from '@/lib/utils';
 
 const THEME_COLORS = [
+  { label: '智慧紫', value: '#7C3AED' },
   { label: '商务蓝', value: '#2563EB' },
   { label: '沉稳黑', value: '#1E293B' },
   { label: '精英灰', value: '#475569' },
@@ -19,7 +21,7 @@ export default function Toolbar() {
   const { 
     resume, updateTheme, resetResume,
     resumes, currentResumeId, switchResume, createResume, deleteResume, renameResume,
-    importSingleResume, importBackupPackage
+    importSingleResume, importBackupPackage, pages
   } = useResumeStore();
   const { isLoggedIn, user, logout } = useAuthStore();
   
@@ -28,6 +30,8 @@ export default function Toolbar() {
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [isStylePanelOpen, setIsStylePanelOpen] = useState(false);
   const [syncStatus, setSyncStatus] = useState<'synced' | 'saving' | 'offline'>('offline');
+  const [pulseActive, setPulseActive] = useState(false);
+  const isFirstRender = useRef(true);
 
   // 多简历管理与导入导出状态
   const [isResumeManagerOpen, setIsResumeManagerOpen] = useState(false);
@@ -124,17 +128,27 @@ export default function Toolbar() {
     e.target.value = '';
   };
 
-  // 模拟云端自动保存状态
+  // 模拟本地/云端自动保存状态
   useEffect(() => {
-    if (!isLoggedIn) {
-      setSyncStatus('offline');
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
       return;
     }
     
     setSyncStatus('saving');
+    
     const timer = setTimeout(() => {
-      setSyncStatus('synced');
-    }, 800);
+      if (isLoggedIn) {
+        setSyncStatus('synced');
+      } else {
+        setSyncStatus('offline');
+      }
+      // 触发自动保存的脉冲反馈
+      setPulseActive(true);
+      const pulseTimer = setTimeout(() => setPulseActive(false), 600);
+      return () => clearTimeout(pulseTimer);
+    }, 600);
+    
     return () => clearTimeout(timer);
   }, [resume, isLoggedIn]);
 
@@ -144,7 +158,7 @@ export default function Toolbar() {
       const res = await fetch('/api/pdf', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(resume),
+        body: JSON.stringify({ resume, pages }),
       });
       if (!res.ok) throw new Error('PDF 生成失败');
       const blob = await res.blob();
@@ -170,7 +184,7 @@ export default function Toolbar() {
       const res = await fetch('/api/pdf', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ resume, format: 'image' }),
+        body: JSON.stringify({ resume, pages, format: 'image' }),
       });
       if (!res.ok) throw new Error('图片生成失败');
       const blob = await res.blob();
@@ -194,7 +208,7 @@ export default function Toolbar() {
     <header className="flex items-center gap-2 px-4 h-11 bg-white border-b border-[var(--border)] shrink-0 z-40">
       {/* Logo */}
       <div className="flex items-center gap-2 mr-2 group cursor-pointer select-none">
-        <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-blue-600 via-indigo-500 to-violet-600 flex items-center justify-center shadow-sm shadow-indigo-100 transition-all duration-300 group-hover:shadow-md group-hover:shadow-indigo-200/50 group-hover:scale-102">
+        <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-[var(--primary)] via-indigo-500 to-pink-500 flex items-center justify-center shadow-sm shadow-purple-100 transition-all duration-300 group-hover:shadow-md group-hover:shadow-purple-200/50 group-hover:scale-102">
           <svg 
             className="w-[18px] h-[18px] text-white transition-transform duration-300 group-hover:scale-105" 
             viewBox="0 0 24 24" 
@@ -225,7 +239,7 @@ export default function Toolbar() {
         </div>
         <span className="text-sm font-bold text-[var(--text-primary)] hidden sm:block tracking-wide transition-colors duration-300 group-hover:text-slate-900">
           简历制作
-          <span className="ml-0.5 font-black bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent transition-all duration-300 group-hover:from-indigo-600 group-hover:to-violet-600">
+          <span className="ml-0.5 font-black bg-gradient-to-r from-[var(--primary)] to-pink-500 bg-clip-text text-transparent transition-all duration-300 group-hover:from-indigo-600 group-hover:to-pink-600">
             ·源
           </span>
         </span>
@@ -234,24 +248,41 @@ export default function Toolbar() {
       <div className="w-px h-4 bg-[var(--border)]" />
 
       {/* 同步状态指示器 */}
-      <div className="flex items-center gap-1.5 ml-1">
-        {syncStatus === 'synced' && (
-          <>
-            <Cloud size={14} className="text-emerald-500" />
-            <span className="text-xs text-emerald-600 font-medium">数据已同步云端</span>
-          </>
-        )}
+      <div className="flex items-center gap-1.5 ml-1 select-none">
         {syncStatus === 'saving' && (
           <>
-            <Cloud size={14} className="text-blue-500 animate-pulse" />
-            <span className="text-xs text-blue-500 font-medium">云端同步中...</span>
+            <Cloud className="w-3.5 h-3.5 text-[var(--primary)] animate-pulse" />
+            <span className="text-xs text-[var(--primary)] font-medium">
+              {isLoggedIn ? '云端同步中...' : '本地保存中...'}
+            </span>
           </>
         )}
+        {syncStatus === 'synced' && (
+          <div className={cn(
+            "flex items-center gap-1.5 transition-all duration-300",
+            pulseActive && "scale-105 text-emerald-500"
+          )}>
+            <Cloud className={cn(
+              "w-3.5 h-3.5 transition-colors duration-300",
+              pulseActive ? "text-emerald-500" : "text-emerald-500/80"
+            )} />
+            <span className="text-xs text-emerald-600 font-medium">数据已同步云端</span>
+          </div>
+        )}
         {syncStatus === 'offline' && (
-          <>
-            <CloudOff size={14} className="text-slate-400" />
-            <span className="text-xs text-[var(--text-muted)]">本地草稿已自动保存</span>
-          </>
+          <div className={cn(
+            "flex items-center gap-1.5 transition-all duration-300",
+            pulseActive && "scale-[1.04] text-[var(--primary)]"
+          )}>
+            <CloudOff className={cn(
+              "w-3.5 h-3.5 transition-colors duration-300",
+              pulseActive ? "text-[var(--primary)]" : "text-slate-400"
+            )} />
+            <span className={cn(
+              "text-xs font-medium transition-colors duration-300",
+              pulseActive ? "text-[var(--primary)]" : "text-[var(--text-muted)]"
+            )}>本地草稿已自动保存</span>
+          </div>
         )}
       </div>
 
@@ -261,7 +292,7 @@ export default function Toolbar() {
         <div className="relative">
           <button
             onClick={() => setIsResumeManagerOpen(!isResumeManagerOpen)}
-            className="flex items-center gap-1 px-1.5 py-1.5 text-xs font-semibold text-blue-600 hover:text-blue-700 active:text-blue-800 bg-transparent border-0 cursor-pointer select-none rounded transition-colors duration-150 focus:outline-none"
+            className="flex items-center gap-1 px-1.5 py-1.5 text-xs font-semibold text-[var(--primary)] hover:text-[var(--primary-hover)] active:scale-95 bg-transparent border-0 cursor-pointer select-none rounded transition-all duration-150 focus:outline-none"
           >
             <Layers size={13} />
             我的简历
@@ -273,12 +304,12 @@ export default function Toolbar() {
               <div className="fixed inset-0 z-20 cursor-default" onClick={() => setIsResumeManagerOpen(false)} />
               
               {/* 简历管理面板 (毛玻璃效果) */}
-              <div className="absolute right-0 top-10 bg-white/95 backdrop-blur-md p-4 rounded-xl border border-slate-100 shadow-2xl z-30 flex flex-col gap-4 animate-scale-up min-w-[280px] max-w-[340px]">
+              <div className="absolute right-0 top-10 bg-white/95 backdrop-blur-md p-4 rounded-xl border border-[var(--border)] shadow-2xl z-30 flex flex-col gap-4 animate-scale-up min-w-[280px] max-w-[340px]">
                 <div className="flex items-center justify-between border-b border-slate-100 pb-1.5">
                   <h4 className="text-xs font-bold text-[var(--text-primary)]">简历列表管理</h4>
                   <button
                     onClick={handleCreateNew}
-                    className="flex items-center gap-0.5 text-[10px] font-bold text-blue-600 hover:text-blue-700 cursor-pointer bg-transparent border-0 focus:outline-none"
+                    className="flex items-center gap-0.5 text-[10px] font-bold text-[var(--primary)] hover:text-[var(--primary-hover)] cursor-pointer bg-transparent border-0 focus:outline-none"
                   >
                     <Plus size={10} />
                     新建
@@ -295,7 +326,7 @@ export default function Toolbar() {
                         key={r.id}
                         className={`group p-2 rounded-lg border transition-all duration-150 flex items-center justify-between gap-2
                           ${isCurrent 
-                            ? 'border-blue-200 bg-blue-50/30' 
+                            ? 'border-[var(--primary)] bg-[var(--primary-light)]/20' 
                             : 'border-slate-100 hover:border-slate-200 hover:bg-slate-50/50'}`}
                       >
                         {isEditing ? (
@@ -309,11 +340,11 @@ export default function Toolbar() {
                                 if (e.key === 'Escape') setEditingResumeId(null);
                               }}
                               autoFocus
-                              className="w-full text-xs px-1.5 py-0.5 border border-blue-400 rounded focus:outline-none bg-white"
+                              className="w-full text-xs px-1.5 py-0.5 border border-[var(--primary)] rounded focus:outline-none bg-white"
                             />
                             <button
                               onClick={() => handleRenameConfirm(r.id)}
-                              className="text-blue-600 hover:text-blue-700 p-0.5 cursor-pointer bg-transparent border-0 focus:outline-none shrink-0"
+                              className="text-[var(--primary)] hover:text-[var(--primary-hover)] p-0.5 cursor-pointer bg-transparent border-0 focus:outline-none shrink-0"
                             >
                               <Check size={12} />
                             </button>
@@ -367,7 +398,7 @@ export default function Toolbar() {
                     <button
                       onClick={handleExportCurrent}
                       title="导出当前简历数据为 JSON"
-                      className="flex items-center justify-center gap-1 py-1.5 border border-slate-200 hover:border-blue-200 hover:bg-blue-50/20 rounded-lg text-[10px] font-bold text-slate-600 hover:text-blue-600 cursor-pointer bg-white transition-all duration-150 focus:outline-none"
+                      className="flex items-center justify-center gap-1 py-1.5 border border-slate-200 hover:border-[var(--primary)] hover:bg-[var(--primary-light)]/20 rounded-lg text-[10px] font-bold text-slate-600 hover:text-[var(--primary)] cursor-pointer bg-white transition-all duration-150 focus:outline-none"
                     >
                       <FileDown size={11} />
                       导出当前
@@ -375,7 +406,7 @@ export default function Toolbar() {
                     <button
                       onClick={handleExportAll}
                       title="将所有简历打包导出备份"
-                      className="flex items-center justify-center gap-1 py-1.5 border border-slate-200 hover:border-blue-200 hover:bg-blue-50/20 rounded-lg text-[10px] font-bold text-slate-600 hover:text-blue-600 cursor-pointer bg-white transition-all duration-150 focus:outline-none"
+                      className="flex items-center justify-center gap-1 py-1.5 border border-slate-200 hover:border-[var(--primary)] hover:bg-[var(--primary-light)]/20 rounded-lg text-[10px] font-bold text-slate-600 hover:text-[var(--primary)] cursor-pointer bg-white transition-all duration-150 focus:outline-none"
                     >
                       <Database size={11} />
                       全部备份
@@ -385,7 +416,7 @@ export default function Toolbar() {
                   <button
                     onClick={() => fileInputRef.current?.click()}
                     title="上传本地备份文件 (.json) 恢复简历"
-                    className="flex items-center justify-center gap-1.5 py-1.5 bg-blue-600 hover:bg-blue-700 rounded-lg text-[10px] font-bold text-white cursor-pointer border-0 shadow-sm transition-all duration-150 focus:outline-none"
+                    className="flex items-center justify-center gap-1.5 py-1.5 bg-[var(--primary)] hover:bg-[var(--primary-hover)] rounded-lg text-[10px] font-bold text-white cursor-pointer border-0 shadow-sm transition-all duration-150 focus:outline-none"
                   >
                     <FileUp size={11} />
                     导入配置数据 (.json)
@@ -408,7 +439,7 @@ export default function Toolbar() {
         <div className="relative">
           <button
             onClick={() => setIsStylePanelOpen(!isStylePanelOpen)}
-            className="flex items-center gap-1 px-1.5 py-1.5 text-xs font-semibold text-blue-600 hover:text-blue-700 active:text-blue-800 bg-transparent border-0 cursor-pointer select-none rounded transition-colors duration-150 focus:outline-none"
+            className="flex items-center gap-1 px-1.5 py-1.5 text-xs font-semibold text-[var(--primary)] hover:text-[var(--primary-hover)] active:scale-95 bg-transparent border-0 cursor-pointer select-none rounded transition-all duration-150 focus:outline-none"
           >
             <Sliders size={13} />
             排版样式
@@ -420,7 +451,7 @@ export default function Toolbar() {
               <div className="fixed inset-0 z-20 cursor-default" onClick={() => setIsStylePanelOpen(false)} />
               
               {/* 悬浮控制面板 (毛玻璃效果) */}
-              <div className="absolute right-0 top-10 bg-white/95 backdrop-blur-md p-4 rounded-xl border border-slate-100 shadow-2xl z-30 flex flex-col gap-4 animate-scale-up min-w-[260px]">
+              <div className="absolute right-0 top-10 bg-white/95 backdrop-blur-md p-4 rounded-xl border border-[var(--border)] shadow-2xl z-30 flex flex-col gap-4 animate-scale-up min-w-[260px]">
                 <h4 className="text-xs font-bold text-[var(--text-primary)] border-b border-slate-100 pb-1.5">排版样式设置</h4>
                 
                 {/* 主题色 */}
@@ -486,7 +517,7 @@ export default function Toolbar() {
             <button
               onClick={logout}
               title="退出登录"
-              className="text-[var(--text-muted)] hover:text-red-500 transition-colors cursor-pointer bg-transparent border-0 focus:outline-none"
+              className="text-[var(--text-muted)] hover:text-red-500 active:scale-90 transition-all duration-150 cursor-pointer bg-transparent border-0 focus:outline-none"
             >
               <LogOut size={13} />
             </button>
@@ -494,7 +525,7 @@ export default function Toolbar() {
         ) : (
           <button
             onClick={() => setIsLoginModalOpen(true)}
-            className="flex items-center gap-1 px-1.5 py-1.5 text-xs font-semibold text-blue-600 hover:text-blue-700 active:text-blue-800 bg-transparent border-0 cursor-pointer select-none rounded transition-colors duration-150 focus:outline-none"
+            className="flex items-center gap-1 px-1.5 py-1.5 text-xs font-semibold text-[var(--primary)] hover:text-[var(--primary-hover)] active:scale-95 bg-transparent border-0 cursor-pointer select-none rounded transition-all duration-150 focus:outline-none"
           >
             登录/云同步
           </button>
@@ -502,7 +533,7 @@ export default function Toolbar() {
 
         <button
           onClick={() => { if (confirm('确定重置所有内容？')) resetResume(); }}
-          className="flex items-center gap-1 px-1.5 py-1.5 text-xs font-semibold text-blue-600 hover:text-blue-700 active:text-blue-800 bg-transparent border-0 cursor-pointer select-none rounded transition-colors duration-150 focus:outline-none"
+          className="flex items-center gap-1 px-1.5 py-1.5 text-xs font-semibold text-[var(--primary)] hover:text-[var(--primary-hover)] active:scale-95 bg-transparent border-0 cursor-pointer select-none rounded transition-all duration-150 focus:outline-none"
         >
           <RotateCcw size={14} />
           重置
@@ -511,7 +542,7 @@ export default function Toolbar() {
         <button
           onClick={handleDownloadImage}
           disabled={exportingImage}
-          className="flex items-center gap-1 px-1.5 py-1.5 text-xs font-semibold text-blue-600 hover:text-blue-700 active:text-blue-800 bg-transparent border-0 cursor-pointer select-none rounded transition-colors duration-150 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+          className="flex items-center gap-1 px-1.5 py-1.5 text-xs font-semibold text-[var(--primary)] hover:text-[var(--primary-hover)] active:scale-95 bg-transparent border-0 cursor-pointer select-none rounded transition-all duration-150 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {exportingImage ? <Loader2 size={14} className="animate-spin" /> : <ImageIcon size={14} />}
           导出图片
@@ -520,7 +551,7 @@ export default function Toolbar() {
         <button
           onClick={handleDownloadPDF}
           disabled={downloading}
-          className="flex items-center gap-1 px-1.5 py-1.5 text-xs font-semibold text-blue-600 hover:text-blue-700 active:text-blue-800 bg-transparent border-0 cursor-pointer select-none rounded transition-colors duration-150 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+          className="flex items-center gap-1 px-1.5 py-1.5 text-xs font-semibold text-[var(--primary)] hover:text-[var(--primary-hover)] active:scale-95 bg-transparent border-0 cursor-pointer select-none rounded transition-all duration-150 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {downloading ? <Loader2 size={14} className="animate-spin" /> : <Download size={14} />}
           下载 PDF
