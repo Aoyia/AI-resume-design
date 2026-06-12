@@ -27,6 +27,7 @@ export default function Toolbar() {
   const { isLoggedIn, user, logout } = useAuthStore();
   
   const style = resume.theme.dividerStyle || 'left-bar';
+  const isVerticalStyle = style === 'left-bar' || style === 'watermark-bar';
   
   const [downloading, setDownloading] = useState(false);
   const [exportingImage, setExportingImage] = useState(false);
@@ -511,10 +512,13 @@ export default function Toolbar() {
                   <label className="text-[11px] font-bold text-[var(--text-secondary)]">标题装饰风格</label>
                   <select
                     className="h-8 rounded-md border border-slate-200 bg-white px-2 text-xs text-[var(--text-primary)] focus:outline-none focus:border-[var(--primary)]"
-                    value={style}
-                    onChange={(e) => updateTheme({ dividerStyle: e.target.value as ResumeTheme['dividerStyle'] })}
+                    value={resume.theme.dividerStyle || 'left-bar'}
+                    onChange={(e) => updateTheme({ dividerStyle: e.target.value as any })}
                   >
                     <option value="left-bar">✨ 高端竖条</option>
+                    <option value="skew-block">💎 斜角底色块</option>
+                    <option value="light-line">🍃 轻盈细线</option>
+                    <option value="watermark-bar">💠 通栏底色条</option>
                     <option value="solid">经典横线</option>
                     <option value="none">无装饰极简</option>
                   </select>
@@ -524,7 +528,7 @@ export default function Toolbar() {
                 <div className="grid grid-cols-2 gap-3 mt-1">
                   <div className="flex flex-col gap-1">
                     <label className="text-[11px] font-bold text-[var(--text-secondary)]">
-                      {style === 'left-bar' ? '竖线宽度' : '横线粗细'}
+                      {isVerticalStyle ? '竖线宽度' : '横线粗细'}
                     </label>
                     <select
                       className="h-8 rounded-md border border-slate-200 bg-white px-2 text-xs text-[var(--text-primary)] focus:outline-none focus:border-[var(--primary)]"
