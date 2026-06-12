@@ -561,7 +561,7 @@ export default function Toolbar() {
                     <label className="text-[11px] font-bold text-[var(--text-secondary)]">模块间距</label>
                     <select
                       className="h-8 rounded-md border border-slate-200 bg-white px-2 text-xs text-[var(--text-primary)] focus:outline-none focus:border-[var(--primary)]"
-                      value={resume.theme.sectionGap}
+                      value={resume.theme.sectionGap ?? 16}
                       onChange={(e) => updateTheme({ sectionGap: Number(e.target.value) })}
                     >
                       {[8, 12, 16, 20, 24, 28].map((g) => (
@@ -574,7 +574,7 @@ export default function Toolbar() {
                     <label className="text-[11px] font-bold text-[var(--text-secondary)]">文本行高</label>
                     <select
                       className="h-8 rounded-md border border-slate-200 bg-white px-2 text-xs text-[var(--text-primary)] focus:outline-none focus:border-[var(--primary)]"
-                      value={resume.theme.lineHeight}
+                      value={resume.theme.lineHeight ?? 1.6}
                       onChange={(e) => updateTheme({ lineHeight: Number(e.target.value) })}
                     >
                       {[1.4, 1.5, 1.6, 1.7, 1.8, 1.9, 2.0].map((lh) => (

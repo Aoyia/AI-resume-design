@@ -78,7 +78,7 @@ function SectionTitle({
         className="text-[0.9em] font-bold uppercase tracking-wider" 
         style={{ 
           color,
-          paddingLeft: style === 'left-bar' ? (useBg ? '2px' : '0px') : '0px'
+          paddingLeft: style === 'left-bar' && useBg ? '2px' : '0px'
         }}
       >
         {title}
