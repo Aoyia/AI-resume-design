@@ -514,6 +514,8 @@ export default function Toolbar() {
                     <option value="left-bar">✨ 高端竖条</option>
                     <option value="solid">经典横线</option>
                     <option value="none">无装饰极简</option>
+                    <option value="pill">🏷️ 药丸胶囊</option>
+                    <option value="bordered-box">🔲 线框卡片</option>
                   </select>
                 </div>
                 
