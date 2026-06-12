@@ -104,6 +104,7 @@ export interface CompetitionItem {
 // ─── 简历全量数据 ────────────────────────────────────────────
 export interface ResumeData {
   id: string;
+  resumeName?: string; // 简历独立名称
   theme: ResumeTheme;
   basicInfo: BasicInfo;
   education: EducationItem[];
@@ -167,6 +168,7 @@ export const DEFAULT_SECTION_ORDER: SectionKey[] = [
 
 export const createEmptyResume = (id = 'yang-zhong-yuan-demo-id'): ResumeData => ({
   id,
+  resumeName: '杨忠源_简历',
   theme: {
     ...DEFAULT_THEME,
   },

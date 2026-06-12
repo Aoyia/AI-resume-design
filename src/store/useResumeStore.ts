@@ -608,7 +608,7 @@ export const useResumeStore = create<ResumeStore>()(
         set((s) => {
           const newId = uid();
           const newResume = createEmptyResume(newId);
-          newResume.basicInfo.name = name || '未命名简历';
+          newResume.resumeName = name || `${newResume.basicInfo.name}_简历`;
           return {
             resumes: [...s.resumes, newResume],
             currentResumeId: newId,
@@ -620,12 +620,12 @@ export const useResumeStore = create<ResumeStore>()(
           const isCurrent = s.currentResumeId === id;
           const updatedResumes = s.resumes.map((r) => {
             if (r.id === id) {
-              return { ...r, basicInfo: { ...r.basicInfo, name } };
+              return { ...r, resumeName: name };
             }
             return r;
           });
           const updatedResume = isCurrent
-            ? { ...s.resume, basicInfo: { ...s.resume.basicInfo, name } }
+            ? { ...s.resume, resumeName: name }
             : s.resume;
           return {
             resumes: updatedResumes,
@@ -662,10 +662,7 @@ export const useResumeStore = create<ResumeStore>()(
           const imported = {
             ...cleanedData,
             id: newId,
-            basicInfo: {
-              ...cleanedData.basicInfo,
-              name: `${cleanedData.basicInfo.name || '未命名'} (导入)`
-            }
+            resumeName: `${cleanedData.resumeName || cleanedData.basicInfo.name || '未命名'} (导入)`
           };
           return {
             resumes: [...s.resumes, imported],
@@ -680,10 +677,9 @@ export const useResumeStore = create<ResumeStore>()(
             return {
               ...cleaned,
               id: override ? cleaned.id : uid(),
-              basicInfo: {
-                ...cleaned.basicInfo,
-                name: override ? cleaned.basicInfo.name : `${cleaned.basicInfo.name || '未命名'} (导入)`
-              }
+              resumeName: override 
+                ? (cleaned.resumeName || `${cleaned.basicInfo?.name || '未命名'}_简历`) 
+                : `${cleaned.resumeName || cleaned.basicInfo?.name || '未命名'} (导入)`
             };
           });
 
@@ -708,10 +704,19 @@ export const useResumeStore = create<ResumeStore>()(
         if (state) {
           // 自动清洗已加载数据中技术栈的加粗词
           if (state.resumes) {
-            state.resumes = state.resumes.map(cleanResumeData);
+            state.resumes = state.resumes.map(r => {
+              const cleaned = cleanResumeData(r);
+              if (!cleaned.resumeName) {
+                cleaned.resumeName = `${cleaned.basicInfo?.name || '未命名'}_简历`;
+              }
+              return cleaned;
+            });
           }
           if (state.resume) {
             state.resume = cleanResumeData(state.resume);
+            if (state.resume && !state.resume.resumeName) {
+              state.resume.resumeName = `${state.resume.basicInfo?.name || '未命名'}_简历`;
+            }
           }
 
           // 确保有 resumes 列表和 currentResumeId

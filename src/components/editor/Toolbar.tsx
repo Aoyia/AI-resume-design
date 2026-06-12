@@ -7,6 +7,7 @@ import { useAuthStore } from '@/store/useAuthStore';
 import LoginModal from './LoginModal';
 import { cn } from '@/lib/utils';
 import { ResumeTheme } from '@/types/resume';
+import { Select, Switch } from '@arco-design/web-react';
 
 const THEME_COLORS = [
   { label: '智慧紫', value: '#7C3AED' },
@@ -67,8 +68,8 @@ export default function Toolbar() {
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      const name = resume.basicInfo.name || '我的简历';
-      a.download = `${name}_简历配置.json`;
+      const name = resume.resumeName || `${resume.basicInfo.name}_简历` || '我的简历';
+      a.download = `${name}_配置.json`;
       a.click();
       URL.revokeObjectURL(url);
     } catch (e) {
@@ -169,9 +170,8 @@ export default function Toolbar() {
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      const name = resume.basicInfo.name || '我的简历';
-      const job = resume.basicInfo.jobTitle || '';
-      a.download = `${name}${job ? `_${job}` : ''}_简历.pdf`;
+      const name = resume.resumeName || `${resume.basicInfo.name}_简历` || '我的简历';
+      a.download = `${name}.pdf`;
       a.click();
       URL.revokeObjectURL(url);
     } catch (e) {
@@ -195,9 +195,8 @@ export default function Toolbar() {
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      const name = resume.basicInfo.name || '我的简历';
-      const job = resume.basicInfo.jobTitle || '';
-      a.download = `${name}${job ? `_${job}` : ''}_简历.png`;
+      const name = resume.resumeName || `${resume.basicInfo.name}_简历` || '我的简历';
+      a.download = `${name}.png`;
       a.click();
       URL.revokeObjectURL(url);
     } catch (e) {
@@ -359,7 +358,7 @@ export default function Toolbar() {
                             className="flex-1 min-w-0 text-left cursor-pointer select-none"
                           >
                             <div className="text-xs font-bold text-slate-700 truncate">
-                              {r.basicInfo.name || '未命名'}
+                              {r.resumeName || `${r.basicInfo.name || '未命名'}_简历`}
                             </div>
                             <div className="text-[9px] text-slate-400 truncate mt-0.5">
                               {r.basicInfo.jobTitle || '暂无求职意向'}
@@ -372,7 +371,7 @@ export default function Toolbar() {
                             <button
                               onClick={() => {
                                 setEditingResumeId(r.id);
-                                setRenameValue(r.basicInfo.name || '');
+                                setRenameValue(r.resumeName || `${r.basicInfo.name || '未命名'}_简历`);
                               }}
                               title="重命名"
                               className="p-1 hover:bg-slate-100 text-slate-400 hover:text-slate-600 rounded cursor-pointer bg-transparent border-0 focus:outline-none"
@@ -381,7 +380,7 @@ export default function Toolbar() {
                             </button>
                             {resumes.length > 1 && (
                               <button
-                                onClick={() => handleDelete(r.id, r.basicInfo.name)}
+                                onClick={() => handleDelete(r.id, r.resumeName || `${r.basicInfo.name || '未命名'}_简历`)}
                                 title="删除"
                                 className="p-1 hover:bg-red-50 text-slate-400 hover:text-red-600 rounded cursor-pointer bg-transparent border-0 focus:outline-none"
                               >
@@ -482,46 +481,49 @@ export default function Toolbar() {
                 <div className="grid grid-cols-2 gap-3 pt-1">
                   <div className="flex flex-col gap-1">
                     <label className="text-[11px] font-bold text-[var(--text-secondary)]">字体</label>
-                    <select
-                      className="h-8 rounded-md border border-slate-200 bg-white px-2 text-xs text-[var(--text-primary)] focus:outline-none focus:border-[var(--primary)]"
+                    <Select
+                      size="small"
                       value={resume.theme.fontFamily}
-                      onChange={(e) => updateTheme({ fontFamily: e.target.value })}
+                      onChange={(val) => updateTheme({ fontFamily: val })}
+                      style={{ width: '100%' }}
                     >
-                      <option value="Noto Serif SC">思源宋体</option>
-                      <option value="Noto Sans SC">思源黑体</option>
-                      <option value="Inter">Inter</option>
-                    </select>
+                      <Select.Option value="Noto Serif SC">思源宋体</Select.Option>
+                      <Select.Option value="Noto Sans SC">思源黑体</Select.Option>
+                      <Select.Option value="Inter">Inter</Select.Option>
+                    </Select>
                   </div>
 
                   <div className="flex flex-col gap-1">
                     <label className="text-[11px] font-bold text-[var(--text-secondary)]">基准字号</label>
-                    <select
-                      className="h-8 rounded-md border border-slate-200 bg-white px-2 text-xs text-[var(--text-primary)] focus:outline-none focus:border-[var(--primary)]"
+                    <Select
+                      size="small"
                       value={resume.theme.fontSize}
-                      onChange={(e) => updateTheme({ fontSize: Number(e.target.value) })}
+                      onChange={(val) => updateTheme({ fontSize: val })}
+                      style={{ width: '100%' }}
                     >
                       {[12, 13, 14, 15, 16].map((s) => (
-                        <option key={s} value={s}>{s}px</option>
+                        <Select.Option key={s} value={s}>{s}px</Select.Option>
                       ))}
-                    </select>
+                    </Select>
                   </div>
                 </div>
 
                 {/* 标题装饰风格 */}
                 <div className="flex flex-col gap-1 mt-2">
                   <label className="text-[11px] font-bold text-[var(--text-secondary)]">标题装饰风格</label>
-                  <select
-                    className="h-8 rounded-md border border-slate-200 bg-white px-2 text-xs text-[var(--text-primary)] focus:outline-none focus:border-[var(--primary)]"
+                  <Select
+                    size="small"
                     value={resume.theme.dividerStyle || 'left-bar'}
-                    onChange={(e) => updateTheme({ dividerStyle: e.target.value as any })}
+                    onChange={(val) => updateTheme({ dividerStyle: val })}
+                    style={{ width: '100%' }}
                   >
-                    <option value="left-bar">✨ 高端竖条</option>
-                    <option value="skew-block">💎 斜角底色块</option>
-                    <option value="light-line">🍃 轻盈细线</option>
-                    <option value="watermark-bar">💠 通栏底色条</option>
-                    <option value="solid">经典横线</option>
-                    <option value="none">无装饰极简</option>
-                  </select>
+                    <Select.Option value="left-bar">✨ 高端竖条</Select.Option>
+                    <Select.Option value="skew-block">💎 斜角底色块</Select.Option>
+                    <Select.Option value="light-line">🍃 轻盈细线</Select.Option>
+                    <Select.Option value="watermark-bar">💠 通栏底色条</Select.Option>
+                    <Select.Option value="solid">经典横线</Select.Option>
+                    <Select.Option value="none">无装饰极简</Select.Option>
+                  </Select>
                 </div>
                 
                 {/* 线条粗细与背景开关 (并排展示) */}
@@ -530,33 +532,26 @@ export default function Toolbar() {
                     <label className="text-[11px] font-bold text-[var(--text-secondary)]">
                       {isVerticalStyle ? '竖线宽度' : '横线粗细'}
                     </label>
-                    <select
-                      className="h-8 rounded-md border border-slate-200 bg-white px-2 text-xs text-[var(--text-primary)] focus:outline-none focus:border-[var(--primary)]"
+                    <Select
+                      size="small"
                       value={resume.theme.dividerHeight ?? 4}
-                      onChange={(e) => updateTheme({ dividerHeight: Number(e.target.value) })}
+                      onChange={(val) => updateTheme({ dividerHeight: val })}
+                      style={{ width: '100%' }}
                     >
                       {[1, 2, 3, 4, 5, 6].map((w) => (
-                        <option key={w} value={w}>{w}px</option>
+                        <Select.Option key={w} value={w}>{w}px</Select.Option>
                       ))}
-                    </select>
+                    </Select>
                   </div>
                 
                   {style === 'left-bar' && (
                     <div className="flex flex-col gap-1">
                       <label className="text-[11px] font-bold text-[var(--text-secondary)]">标题底色</label>
                       <div className="flex items-center h-8">
-                        <button
-                          onClick={() => updateTheme({ enableTitleBg: !resume.theme.enableTitleBg })}
-                          className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                            resume.theme.enableTitleBg ? 'bg-[var(--primary)]' : 'bg-slate-200'
-                          }`}
-                        >
-                          <span
-                            className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-                              resume.theme.enableTitleBg ? 'translate-x-4' : 'translate-x-0'
-                            }`}
-                          />
-                        </button>
+                        <Switch
+                          checked={resume.theme.enableTitleBg}
+                          onChange={(val) => updateTheme({ enableTitleBg: val })}
+                        />
                       </div>
                     </div>
                   )}
@@ -566,28 +561,30 @@ export default function Toolbar() {
                 <div className="grid grid-cols-2 gap-3 mt-1">
                   <div className="flex flex-col gap-1">
                     <label className="text-[11px] font-bold text-[var(--text-secondary)]">模块间距</label>
-                    <select
-                      className="h-8 rounded-md border border-slate-200 bg-white px-2 text-xs text-[var(--text-primary)] focus:outline-none focus:border-[var(--primary)]"
+                    <Select
+                      size="small"
                       value={resume.theme.sectionGap ?? 16}
-                      onChange={(e) => updateTheme({ sectionGap: Number(e.target.value) })}
+                      onChange={(val) => updateTheme({ sectionGap: val })}
+                      style={{ width: '100%' }}
                     >
                       {[8, 12, 16, 20, 24, 28].map((g) => (
-                        <option key={g} value={g}>{g}px</option>
+                        <Select.Option key={g} value={g}>{g}px</Select.Option>
                       ))}
-                    </select>
+                    </Select>
                   </div>
                 
                   <div className="flex flex-col gap-1">
                     <label className="text-[11px] font-bold text-[var(--text-secondary)]">文本行高</label>
-                    <select
-                      className="h-8 rounded-md border border-slate-200 bg-white px-2 text-xs text-[var(--text-primary)] focus:outline-none focus:border-[var(--primary)]"
+                    <Select
+                      size="small"
                       value={resume.theme.lineHeight ?? 1.6}
-                      onChange={(e) => updateTheme({ lineHeight: Number(e.target.value) })}
+                      onChange={(val) => updateTheme({ lineHeight: val })}
+                      style={{ width: '100%' }}
                     >
                       {[1.4, 1.5, 1.6, 1.7, 1.8, 1.9, 2.0].map((lh) => (
-                        <option key={lh} value={lh}>{lh.toFixed(1)}倍</option>
+                        <Select.Option key={lh} value={lh}>{lh.toFixed(1)}倍</Select.Option>
                       ))}
-                    </select>
+                    </Select>
                   </div>
                 </div>
               </div>
