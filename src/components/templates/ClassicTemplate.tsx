@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { ResumeData } from '@/types/resume';
+import { ResumeData, ResumeTheme } from '@/types/resume';
 import ReactMarkdown from 'react-markdown';
 
 /** 单一段落的 Markdown 渲染（bullet points 等） */
@@ -25,18 +25,64 @@ function MdContent({ content }: { content: string }) {
 }
 
 /** 通用 Section 标题行 */
-function SectionTitle({ title, color, marginTop }: { title: string; color: string; marginTop: number }) {
-  return (
-    <div
-      data-type="section-title"
-      className="flex items-center gap-2 mb-2"
-      style={{
-        borderBottom: `1.5px solid ${color}`,
+function SectionTitle({ 
+  title, 
+  theme, 
+  marginTop 
+}: { 
+  title: string; 
+  theme: ResumeTheme; 
+  marginTop: number 
+}) {
+  const color = theme.primaryColor;
+  const style = theme.dividerStyle || 'left-bar';
+  const height = theme.dividerHeight ?? (style === 'left-bar' ? 4 : 1.5);
+  const useBg = theme.enableTitleBg && style === 'left-bar';
+
+  const getContainerStyle = (): React.CSSProperties => {
+    const baseStyle: React.CSSProperties = {
+      marginTop: `${marginTop}px`,
+      display: 'flex',
+      alignItems: 'center',
+    };
+
+    if (style === 'left-bar') {
+      return {
+        ...baseStyle,
+        borderLeft: `${height}px solid ${color}`,
+        paddingLeft: '8px',
+        paddingTop: '4px',
+        paddingBottom: '4px',
+        background: useBg ? `${color}0D` : 'transparent',
+        borderRadius: useBg ? '4px' : '0px',
+        marginBottom: '8px',
+      };
+    } else if (style === 'solid') {
+      return {
+        ...baseStyle,
+        borderBottom: `${height}px solid ${color}`,
         paddingBottom: '3px',
-        marginTop: `${marginTop}px`,
-      }}
-    >
-      <span className="text-[0.9em] font-bold uppercase tracking-wider" style={{ color }}>{title}</span>
+        marginBottom: '8px',
+      };
+    } else {
+      return {
+        ...baseStyle,
+        marginBottom: '8px',
+      };
+    }
+  };
+
+  return (
+    <div data-type="section-title" style={getContainerStyle()}>
+      <span 
+        className="text-[0.9em] font-bold uppercase tracking-wider" 
+        style={{ 
+          color,
+          paddingLeft: style === 'left-bar' && !useBg ? '0px' : '2px' 
+        }}
+      >
+        {title}
+      </span>
     </div>
   );
 }
@@ -164,12 +210,12 @@ export function getFlatElements(data: ResumeData): React.ReactElement[] {
     if (!hasContent) return;
 
     // 确定大模块的 marginTop
-    const sectionMarginTop = isFirstSection ? 4 : gap;
+    const sectionMarginTop = isFirstSection ? 0 : (theme.sectionGap ?? 16);
     isFirstSection = false;
 
     if (key === 'education' && education.length > 0) {
       elements.push(
-        <SectionTitle key="edu-title" title="教育经历" color={color} marginTop={sectionMarginTop} />
+        <SectionTitle key="edu-title" title="教育经历" theme={theme} marginTop={sectionMarginTop} />
       );
       education.forEach((edu, idx) => {
         const itemGroup = `edu-${edu.id}`;
@@ -211,7 +257,7 @@ export function getFlatElements(data: ResumeData): React.ReactElement[] {
 
     if (key === 'workExperience' && workExperience.length > 0) {
       elements.push(
-        <SectionTitle key="work-title" title="工作经历" color={color} marginTop={sectionMarginTop} />
+        <SectionTitle key="work-title" title="工作经历" theme={theme} marginTop={sectionMarginTop} />
       );
       workExperience.forEach((w, idx) => {
         const itemGroup = `work-${w.id}`;
@@ -254,7 +300,7 @@ export function getFlatElements(data: ResumeData): React.ReactElement[] {
 
     if (key === 'projects' && projects.length > 0) {
       elements.push(
-        <SectionTitle key="proj-title" title="项目经历" color={color} marginTop={sectionMarginTop} />
+        <SectionTitle key="proj-title" title="项目经历" theme={theme} marginTop={sectionMarginTop} />
       );
       projects.forEach((p, idx) => {
         const itemGroup = `proj-${p.id}`;
@@ -297,7 +343,7 @@ export function getFlatElements(data: ResumeData): React.ReactElement[] {
 
     if (key === 'skills' && skills) {
       elements.push(
-        <SectionTitle key="skills-title" title="专业技能" color={color} marginTop={sectionMarginTop} />
+        <SectionTitle key="skills-title" title="专业技能" theme={theme} marginTop={sectionMarginTop} />
       );
       if (typeof skills === 'string') {
         const blocks = splitMarkdownToBlocks(skills);
@@ -334,7 +380,7 @@ export function getFlatElements(data: ResumeData): React.ReactElement[] {
 
     if (key === 'selfEvaluation' && selfEvaluation) {
       elements.push(
-        <SectionTitle key="self-eval-title" title="自我评价" color={color} marginTop={sectionMarginTop} />
+        <SectionTitle key="self-eval-title" title="自我评价" theme={theme} marginTop={sectionMarginTop} />
       );
       const blocks = splitMarkdownToBlocks(selfEvaluation);
       blocks.forEach((block, idx) => {
@@ -355,7 +401,7 @@ export function getFlatElements(data: ResumeData): React.ReactElement[] {
     if (key === 'customSections' && data.customSections && data.customSections.length > 0) {
       data.customSections.forEach((cs) => {
         elements.push(
-          <SectionTitle key={`custom-title-${cs.id}`} title={cs.title} color={color} marginTop={sectionMarginTop} />
+          <SectionTitle key={`custom-title-${cs.id}`} title={cs.title} theme={theme} marginTop={sectionMarginTop} />
         );
         const blocks = splitMarkdownToBlocks(cs.content);
         blocks.forEach((block, idx) => {
@@ -376,7 +422,7 @@ export function getFlatElements(data: ResumeData): React.ReactElement[] {
 
     if (key === 'campusExperience' && campusExperience && campusExperience.length > 0) {
       elements.push(
-        <SectionTitle key="campus-title" title="校园经历" color={color} marginTop={sectionMarginTop} />
+        <SectionTitle key="campus-title" title="校园经历" theme={theme} marginTop={sectionMarginTop} />
       );
       campusExperience.forEach((c, idx) => {
         const itemGroup = `campus-${c.id}`;
@@ -419,7 +465,7 @@ export function getFlatElements(data: ResumeData): React.ReactElement[] {
 
     if (key === 'trainingExperience' && trainingExperience && trainingExperience.length > 0) {
       elements.push(
-        <SectionTitle key="train-title" title="培训经历" color={color} marginTop={sectionMarginTop} />
+        <SectionTitle key="train-title" title="培训经历" theme={theme} marginTop={sectionMarginTop} />
       );
       trainingExperience.forEach((t, idx) => {
         const itemGroup = `train-${t.id}`;
@@ -462,7 +508,7 @@ export function getFlatElements(data: ResumeData): React.ReactElement[] {
 
     if (key === 'openSource' && openSource && openSource.length > 0) {
       elements.push(
-        <SectionTitle key="os-title" title="开源项目与作品" color={color} marginTop={sectionMarginTop} />
+        <SectionTitle key="os-title" title="开源项目与作品" theme={theme} marginTop={sectionMarginTop} />
       );
       openSource.forEach((os, idx) => {
         const itemGroup = `os-${os.id}`;
@@ -505,7 +551,7 @@ export function getFlatElements(data: ResumeData): React.ReactElement[] {
 
     if (key === 'honorAward' && honorAward && honorAward.length > 0) {
       elements.push(
-        <SectionTitle key="honor-title" title="荣誉奖项" color={color} marginTop={sectionMarginTop} />
+        <SectionTitle key="honor-title" title="荣誉奖项" theme={theme} marginTop={sectionMarginTop} />
       );
       honorAward.forEach((item, idx) => {
         elements.push(
@@ -529,7 +575,7 @@ export function getFlatElements(data: ResumeData): React.ReactElement[] {
 
     if (key === 'certificate' && certificate && certificate.length > 0) {
       elements.push(
-        <SectionTitle key="cert-title" title="证书资质" color={color} marginTop={sectionMarginTop} />
+        <SectionTitle key="cert-title" title="证书资质" theme={theme} marginTop={sectionMarginTop} />
       );
       certificate.forEach((item, idx) => {
         elements.push(
@@ -550,7 +596,7 @@ export function getFlatElements(data: ResumeData): React.ReactElement[] {
 
     if (key === 'languageSkill' && languageSkill && languageSkill.length > 0) {
       elements.push(
-        <SectionTitle key="lang-title" title="语言能力" color={color} marginTop={sectionMarginTop} />
+        <SectionTitle key="lang-title" title="语言能力" theme={theme} marginTop={sectionMarginTop} />
       );
       languageSkill.forEach((item, idx) => {
         elements.push(
@@ -571,7 +617,7 @@ export function getFlatElements(data: ResumeData): React.ReactElement[] {
 
     if (key === 'competition' && competition && competition.length > 0) {
       elements.push(
-        <SectionTitle key="comp-title" title="竞赛经历" color={color} marginTop={sectionMarginTop} />
+        <SectionTitle key="comp-title" title="竞赛经历" theme={theme} marginTop={sectionMarginTop} />
       );
       competition.forEach((item, idx) => {
         elements.push(
@@ -595,7 +641,7 @@ export function getFlatElements(data: ResumeData): React.ReactElement[] {
 
     if (key === 'researchPublication' && researchPublication && researchPublication.length > 0) {
       elements.push(
-        <SectionTitle key="pub-title" title="专利/著作/论文" color={color} marginTop={sectionMarginTop} />
+        <SectionTitle key="pub-title" title="专利/著作/论文" theme={theme} marginTop={sectionMarginTop} />
       );
       researchPublication.forEach((pub, idx) => {
         const itemGroup = `pub-${pub.id}`;
