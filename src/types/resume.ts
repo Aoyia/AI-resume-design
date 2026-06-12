@@ -10,7 +10,7 @@ export interface ResumeTheme {
   sectionGap: number;     // 模块间距，单位 px，默认 16
   
   // 新增属性
-  dividerStyle?: 'solid' | 'left-bar' | 'none'; // 分割风格
+  dividerStyle?: 'solid' | 'left-bar' | 'pill' | 'bordered-box' | 'none'; // 分割风格
   dividerHeight?: number;                       // 装饰线粗细/宽度
   enableTitleBg?: boolean;                    // 是否开启标题底色
 }
