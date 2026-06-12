@@ -72,7 +72,7 @@ function SectionTitle({
         ...baseStyle,
         borderBottom: '1px solid #E5E7EB',
         paddingBottom: '0px',
-        marginBottom: '12px',
+        marginBottom: '10px',
       };
     } else if (style === 'light-line') {
       return {
@@ -107,8 +107,8 @@ function SectionTitle({
           style={{
             background: color,
             transform: 'skewX(-12deg)',
-            padding: '4px 14px',
-            borderRadius: '2px',
+            padding: '2.5px 10px',
+            borderRadius: '0px',
             display: 'inline-block',
           }}
         >
