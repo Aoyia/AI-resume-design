@@ -12,6 +12,7 @@ import { Select, Switch } from '@arco-design/web-react';
 const THEME_COLORS = [
   { label: '智慧紫', value: '#7C3AED' },
   { label: '商务蓝', value: '#2563EB' },
+  { label: '科技蓝', value: '#0091FF' },
   { label: '沉稳黑', value: '#1E293B' },
   { label: '精英灰', value: '#475569' },
   { label: '活力橙', value: '#EA580C' },
@@ -464,7 +465,7 @@ export default function Toolbar() {
                 {/* 主题色 */}
                 <div className="space-y-1.5">
                   <label className="text-[11px] font-bold text-[var(--text-secondary)]">主题颜色</label>
-                  <div className="grid grid-cols-8 gap-1.5 items-center">
+                  <div className="grid grid-cols-9 gap-1.5 items-center">
                     {THEME_COLORS.map((c) => (
                       <button
                         key={c.value}
