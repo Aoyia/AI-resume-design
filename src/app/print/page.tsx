@@ -2,7 +2,8 @@
 
 import { ResumeData } from '@/types/resume';
 import ClassicTemplate, { getFlatElements, FONT_FALLBACKS } from '@/components/templates/ClassicTemplate';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import './print.css';
 
 const A4_W = 794;
@@ -11,11 +12,9 @@ const A4_PADDING_Y = 48;
 const A4_CONTENT_H = A4_H - A4_PADDING_Y * 2;
 const A4_SAFE_CONTENT_H = A4_CONTENT_H - 8; // 8px 安全缓冲区，防止临界渲染超高
 
-export default function PrintPage({
-  searchParams,
-}: {
-  searchParams: { id?: string };
-}) {
+function PrintContent() {
+  const searchParams = useSearchParams();
+  const id = searchParams.get('id');
   const [resume, setResume] = useState<ResumeData | null>(null);
   const [pages, setPages] = useState<number[][]>([]);
   const [isReady, setIsReady] = useState(false);
@@ -23,8 +22,8 @@ export default function PrintPage({
 
   // 1. 客户端获取临时数据
   useEffect(() => {
-    if (searchParams.id) {
-      fetch(`/api/pdf/data?id=${searchParams.id}`)
+    if (id) {
+      fetch(`/api/pdf/data?id=${id}`)
         .then((res) => res.json())
         .then((data) => {
           if (data && !data.error) {
@@ -44,7 +43,7 @@ export default function PrintPage({
           console.error('[Fetch print data error]', err);
         });
     }
-  }, [searchParams.id]);
+  }, [id]);
 
   // 2. 动态测量高度并分页 (仅作为未传 pages 时的兜底降级方案)
   useEffect(() => {
@@ -170,5 +169,13 @@ export default function PrintPage({
         </div>
       ))}
     </div>
+  );
+}
+
+export default function PrintPage() {
+  return (
+    <Suspense fallback={<div style={{ padding: 40, background: 'white' }}>正在初始化打印组件...</div>}>
+      <PrintContent />
+    </Suspense>
   );
 }

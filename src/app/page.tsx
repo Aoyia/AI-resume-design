@@ -3,6 +3,7 @@
 import Toolbar from '@/components/editor/Toolbar';
 import EditorPanel from '@/components/editor/EditorPanel';
 import PreviewPanel from '@/components/editor/PreviewPanel';
+import PasswordGate from '@/components/editor/PasswordGate';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 const MIN_WIDTH = 260;
@@ -11,10 +12,22 @@ const DEFAULT_WIDTH = 380;
 
 export default function EditorPage() {
   const [editorWidth, setEditorWidth] = useState(DEFAULT_WIDTH);
+  const [authorized, setAuthorized] = useState(false);
+  const [checking, setChecking] = useState(true);
   const isDragging = useRef(false);
   const startX = useRef(0);
   const startWidth = useRef(DEFAULT_WIDTH);
   const resizerRef = useRef<HTMLDivElement>(null);
+
+  // 挂载时检查本地 LocalStorage 授权情况
+  useEffect(() => {
+    const saved = localStorage.getItem('resume_sys_auth');
+    const correctPassword = process.env.NEXT_PUBLIC_PAGE_PASSWORD || 'resume2026';
+    if (saved && atob(saved) === correctPassword) {
+      setAuthorized(true);
+    }
+    setChecking(false);
+  }, []);
 
   const onMouseDown = useCallback((e: React.MouseEvent) => {
     isDragging.current = true;
@@ -24,6 +37,18 @@ export default function EditorPage() {
     document.body.style.userSelect = 'none';
     e.preventDefault();
   }, [editorWidth]);
+
+  if (checking) {
+    return (
+      <div className="h-screen flex items-center justify-center bg-slate-50 text-slate-400 font-medium text-sm">
+        正在验证授权信息...
+      </div>
+    );
+  }
+
+  if (!authorized) {
+    return <PasswordGate onSuccess={() => setAuthorized(true)} />;
+  }
 
   useEffect(() => {
     const onMouseMove = (e: MouseEvent) => {
