@@ -61,52 +61,50 @@ export default function EditorPage() {
     };
   }, []);
 
-  if (checking) {
-    return (
-      <div className="h-screen flex items-center justify-center bg-slate-50 text-slate-400 font-medium text-sm">
-        正在验证授权信息...
-      </div>
-    );
-  }
-
-  if (!authorized) {
-    return <PasswordGate onSuccess={() => setAuthorized(true)} />;
-  }
-
   return (
-    <div className="h-screen flex flex-col overflow-hidden">
-      <Toolbar />
-      <div className="flex flex-1 overflow-hidden">
-        {/* 左侧编辑面板 */}
-        <aside
-          style={{ width: editorWidth }}
-          className="shrink-0 border-r border-[var(--border)] bg-white overflow-hidden flex flex-col"
-        >
-          <EditorPanel />
-        </aside>
-
-        {/* 可拖拽分割条 */}
-        <div
-          ref={resizerRef}
-          onMouseDown={onMouseDown}
-          className="group relative w-1 shrink-0 bg-[var(--border)] hover:bg-[var(--primary)] transition-colors duration-150 cursor-col-resize z-10 flex items-center justify-center"
-          title="拖动以调整面板宽度"
-        >
-          {/* 拖动时的高亮指示条 */}
-          <div className="absolute inset-y-0 -left-1 -right-1" />
-          {/* 中央拖动把手点 */}
-          <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-150 flex flex-col gap-0.5 pointer-events-none">
-            <div className="w-1 h-1 rounded-full bg-[var(--primary)]" />
-            <div className="w-1 h-1 rounded-full bg-[var(--primary)]" />
-            <div className="w-1 h-1 rounded-full bg-[var(--primary)]" />
-          </div>
+    <div className="h-screen flex flex-col overflow-hidden bg-slate-50">
+      {checking ? (
+        <div className="h-screen flex items-center justify-center bg-slate-50 text-slate-400 font-medium text-sm">
+          正在验证授权信息...
         </div>
+      ) : !authorized ? (
+        <PasswordGate onSuccess={() => setAuthorized(true)} />
+      ) : (
+        <>
+          <Toolbar />
+          <div className="flex flex-1 overflow-hidden">
+            {/* 左侧编辑面板 */}
+            <aside
+              style={{ width: editorWidth }}
+              className="shrink-0 border-r border-[var(--border)] bg-white overflow-hidden flex flex-col"
+            >
+              <EditorPanel />
+            </aside>
 
-        {/* 右侧预览面板 */}
-        <main className="flex-1 overflow-hidden min-w-0">
-          <PreviewPanel />
-        </main>
-      </div>
+            {/* 可拖拽分割条 */}
+            <div
+              ref={resizerRef}
+              onMouseDown={onMouseDown}
+              className="group relative w-1 shrink-0 bg-[var(--border)] hover:bg-[var(--primary)] transition-colors duration-150 cursor-col-resize z-10 flex items-center justify-center"
+              title="拖动以调整面板宽度"
+            >
+              {/* 拖动时的高亮指示条 */}
+              <div className="absolute inset-y-0 -left-1 -right-1" />
+              {/* 中央拖动把手点 */}
+              <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-150 flex flex-col gap-0.5 pointer-events-none">
+                <div className="w-1 h-1 rounded-full bg-[var(--primary)]" />
+                <div className="w-1 h-1 rounded-full bg-[var(--primary)]" />
+                <div className="w-1 h-1 rounded-full bg-[var(--primary)]" />
+              </div>
+            </div>
+
+            {/* 右侧预览面板 */}
+            <main className="flex-1 overflow-hidden min-w-0 bg-slate-100">
+              <PreviewPanel />
+            </main>
+          </div>
+        </>
+      )}
     </div>
   );
 }
