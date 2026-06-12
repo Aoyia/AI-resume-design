@@ -64,6 +64,30 @@ function SectionTitle({
         paddingBottom: '3px',
         marginBottom: '8px',
       };
+    } else if (style === 'skew-block') {
+      return {
+        ...baseStyle,
+        borderBottom: '1px solid #E5E7EB',
+        paddingBottom: '0px',
+        marginBottom: '12px',
+      };
+    } else if (style === 'light-line') {
+      return {
+        ...baseStyle,
+        borderBottom: `1px solid ${color}33`,
+        paddingBottom: '6px',
+        marginBottom: '8px',
+      };
+    } else if (style === 'watermark-bar') {
+      return {
+        ...baseStyle,
+        width: '100%',
+        background: `${color}0A`,
+        borderLeft: `${height}px solid ${color}`,
+        padding: '6px 8px',
+        borderRadius: '2px',
+        marginBottom: '8px',
+      };
     } else {
       return {
         ...baseStyle,
@@ -71,6 +95,33 @@ function SectionTitle({
       };
     }
   };
+
+  if (style === 'skew-block') {
+    return (
+      <div data-type="section-title" style={getContainerStyle()}>
+        <div
+          style={{
+            background: color,
+            transform: 'skewX(-12deg)',
+            padding: '4px 14px',
+            borderRadius: '2px',
+            display: 'inline-block',
+          }}
+        >
+          <span 
+            className="text-[0.9em] font-bold uppercase tracking-wider" 
+            style={{ 
+              color: '#FFFFFF',
+              display: 'inline-block',
+              transform: 'skewX(12deg)'
+            }}
+          >
+            {title}
+          </span>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div data-type="section-title" style={getContainerStyle()}>
