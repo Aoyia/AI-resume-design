@@ -36,7 +36,10 @@ function SectionTitle({
 }) {
   const color = theme.primaryColor;
   const style = theme.dividerStyle || 'left-bar';
-  const height = theme.dividerHeight ?? (style === 'left-bar' ? 4 : 1.5);
+  const height = theme.dividerHeight ?? (
+    style === 'left-bar' ? 4 : 
+    style === 'watermark-bar' ? 3 : 1.5
+  );
   const useBg = theme.enableTitleBg && style === 'left-bar';
 
   const getContainerStyle = (): React.CSSProperties => {
@@ -85,7 +88,7 @@ function SectionTitle({
         width: '100%',
         background: `${color}0A`,
         borderLeft: `${height}px solid ${color}`,
-        padding: '6px 8px',
+        padding: '3.5px 8px',
         borderRadius: '0px',
         marginBottom: '8px',
       };
