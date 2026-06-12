@@ -8,6 +8,11 @@ export interface ResumeTheme {
   fontSize: number;       // 基准字号，单位 px，默认 14
   lineHeight: number;     // 行高倍数，默认 1.6
   sectionGap: number;     // 模块间距，单位 px，默认 16
+  
+  // 新增属性
+  dividerStyle?: 'solid' | 'left-bar' | 'none'; // 分割风格
+  dividerHeight?: number;                       // 装饰线粗细/宽度
+  themeBackground?: boolean;                    // 是否开启标题底色
 }
 
 // ─── 基本信息 ────────────────────────────────────────────────
@@ -147,6 +152,9 @@ export const DEFAULT_THEME: ResumeTheme = {
   fontSize: 14,
   lineHeight: 1.6,
   sectionGap: 16,
+  dividerStyle: 'left-bar',
+  dividerHeight: 4,
+  themeBackground: true,
 };
 
 export const DEFAULT_SECTION_ORDER: SectionKey[] = [
@@ -165,7 +173,10 @@ export const createEmptyResume = (id = 'yang-zhong-yuan-demo-id'): ResumeData =>
     fontFamily: "Noto Sans SC",
     fontSize: 14,
     lineHeight: 1.6,
-    sectionGap: 16
+    sectionGap: 16,
+    dividerStyle: 'left-bar',
+    dividerHeight: 4,
+    themeBackground: true,
   },
   basicInfo: {
     name: "杨忠源",
