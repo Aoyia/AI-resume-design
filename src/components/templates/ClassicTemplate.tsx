@@ -86,7 +86,7 @@ function SectionTitle({
         background: `${color}0A`,
         borderLeft: `${height}px solid ${color}`,
         padding: '6px 8px',
-        borderRadius: '2px',
+        borderRadius: '0px',
         marginBottom: '8px',
       };
     } else {
