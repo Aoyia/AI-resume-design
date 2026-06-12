@@ -38,18 +38,6 @@ export default function EditorPage() {
     e.preventDefault();
   }, [editorWidth]);
 
-  if (checking) {
-    return (
-      <div className="h-screen flex items-center justify-center bg-slate-50 text-slate-400 font-medium text-sm">
-        正在验证授权信息...
-      </div>
-    );
-  }
-
-  if (!authorized) {
-    return <PasswordGate onSuccess={() => setAuthorized(true)} />;
-  }
-
   useEffect(() => {
     const onMouseMove = (e: MouseEvent) => {
       if (!isDragging.current) return;
@@ -72,6 +60,18 @@ export default function EditorPage() {
       window.removeEventListener('mouseup', onMouseUp);
     };
   }, []);
+
+  if (checking) {
+    return (
+      <div className="h-screen flex items-center justify-center bg-slate-50 text-slate-400 font-medium text-sm">
+        正在验证授权信息...
+      </div>
+    );
+  }
+
+  if (!authorized) {
+    return <PasswordGate onSuccess={() => setAuthorized(true)} />;
+  }
 
   return (
     <div className="h-screen flex flex-col overflow-hidden">
