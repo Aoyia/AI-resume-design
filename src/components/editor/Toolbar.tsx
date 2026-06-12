@@ -6,6 +6,7 @@ import { useResumeStore } from '@/store/useResumeStore';
 import { useAuthStore } from '@/store/useAuthStore';
 import LoginModal from './LoginModal';
 import { cn } from '@/lib/utils';
+import { ResumeTheme } from '@/types/resume';
 
 const THEME_COLORS = [
   { label: '智慧紫', value: '#7C3AED' },
@@ -24,6 +25,8 @@ export default function Toolbar() {
     importSingleResume, importBackupPackage, pages
   } = useResumeStore();
   const { isLoggedIn, user, logout } = useAuthStore();
+  
+  const style = resume.theme.dividerStyle || 'left-bar';
   
   const [downloading, setDownloading] = useState(false);
   const [exportingImage, setExportingImage] = useState(false);
@@ -508,14 +511,12 @@ export default function Toolbar() {
                   <label className="text-[11px] font-bold text-[var(--text-secondary)]">标题装饰风格</label>
                   <select
                     className="h-8 rounded-md border border-slate-200 bg-white px-2 text-xs text-[var(--text-primary)] focus:outline-none focus:border-[var(--primary)]"
-                    value={resume.theme.dividerStyle || 'left-bar'}
-                    onChange={(e) => updateTheme({ dividerStyle: e.target.value as any })}
+                    value={style}
+                    onChange={(e) => updateTheme({ dividerStyle: e.target.value as ResumeTheme['dividerStyle'] })}
                   >
                     <option value="left-bar">✨ 高端竖条</option>
                     <option value="solid">经典横线</option>
                     <option value="none">无装饰极简</option>
-                    <option value="pill">🏷️ 药丸胶囊</option>
-                    <option value="bordered-box">🔲 线框卡片</option>
                   </select>
                 </div>
                 
@@ -523,7 +524,7 @@ export default function Toolbar() {
                 <div className="grid grid-cols-2 gap-3 mt-1">
                   <div className="flex flex-col gap-1">
                     <label className="text-[11px] font-bold text-[var(--text-secondary)]">
-                      {(resume.theme.dividerStyle || 'left-bar') === 'left-bar' ? '竖线宽度' : '横线粗细'}
+                      {style === 'left-bar' ? '竖线宽度' : '横线粗细'}
                     </label>
                     <select
                       className="h-8 rounded-md border border-slate-200 bg-white px-2 text-xs text-[var(--text-primary)] focus:outline-none focus:border-[var(--primary)]"
@@ -536,7 +537,7 @@ export default function Toolbar() {
                     </select>
                   </div>
                 
-                  {(resume.theme.dividerStyle || 'left-bar') === 'left-bar' && (
+                  {style === 'left-bar' && (
                     <div className="flex flex-col gap-1">
                       <label className="text-[11px] font-bold text-[var(--text-secondary)]">标题底色</label>
                       <div className="flex items-center h-8">
