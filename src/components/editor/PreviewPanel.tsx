@@ -3,19 +3,73 @@
 import { useResumeStore } from '@/store/useResumeStore';
 import ClassicTemplate, { getFlatElements, FONT_FALLBACKS } from '@/components/templates/ClassicTemplate';
 import { useEffect, useRef, useState } from 'react';
-import { ZoomIn, ZoomOut } from 'lucide-react';
+import { ZoomIn, ZoomOut, Download, Image as ImageIcon, Loader2, Edit3, Lightbulb } from 'lucide-react';
 
-/** A4尺寸常量（px，96dpi） */
-const A4_W = 794;
-const A4_H = 1123;
-const A4_PADDING_Y = 48; // 上下 padding 各 48px
-const A4_CONTENT_H = A4_H - A4_PADDING_Y * 2; // 1027px 有效高度
+import { A4_W, A4_H, A4_PADDING_Y, A4_PADDING_X, A4_SAFE_CONTENT_H } from '@/lib/a4Constants';
 
-export default function PreviewPanel() {
+interface PreviewPanelProps {
+  authorized: boolean;
+  onStartEdit: () => void;
+}
+
+export default function PreviewPanel({ authorized, onStartEdit }: PreviewPanelProps) {
   const { resume, pages, setPages } = useResumeStore();
   const [scale, setScale] = useState(1);
   const containerRef = useRef<HTMLDivElement>(null);
   const measureRef = useRef<HTMLDivElement>(null);
+
+  const [downloading, setDownloading] = useState(false);
+  const [exportingImage, setExportingImage] = useState(false);
+
+  const handleDownloadPDF = async () => {
+    setDownloading(true);
+    try {
+      const res = await fetch('/api/pdf', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ resume, pages }),
+      });
+      if (!res.ok) throw new Error('PDF 生成失败');
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      const name = resume.resumeName || `${resume.basicInfo.name}_简历` || '我的简历';
+      a.download = `${name}.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      alert('PDF 生成失败，请稍后重试');
+      console.error(e);
+    } finally {
+      setDownloading(false);
+    }
+  };
+
+  const handleDownloadImage = async () => {
+    setExportingImage(true);
+    try {
+      const res = await fetch('/api/pdf', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ resume, pages, format: 'image' }),
+      });
+      if (!res.ok) throw new Error('图片生成失败');
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      const name = resume.resumeName || `${resume.basicInfo.name}_简历` || '我的简历';
+      a.download = `${name}.png`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      alert('图片生成失败，请稍后重试');
+      console.error(e);
+    } finally {
+      setExportingImage(false);
+    }
+  };
 
   // 用一个局部状态缓存防抖后的 resume 用于计算分页
   const [debouncedResume, setDebouncedResume] = useState(resume);
@@ -46,7 +100,7 @@ export default function PreviewPanel() {
   };
 
   const heightCacheRef = useRef<Map<string, number>>(new Map());
-  const A4_SAFE_CONTENT_H = A4_CONTENT_H - 8; // 8px 安全缓冲区，防止边界条件下的溢出
+  // A4_SAFE_CONTENT_H 已从 @/lib/a4Constants 导入（含 40px 底部安全缓冲区）
 
   // 根据 debouncedResume 动态测量高度并分页
   useEffect(() => {
@@ -141,12 +195,26 @@ export default function PreviewPanel() {
 
   return (
     <div className="relative h-full flex flex-col bg-[var(--surface)]">
+      {/* 极细微磨砂悬浮编辑按钮 */}
+      {!authorized && (
+        <div className="absolute top-4 right-4 z-40 select-none">
+          <button 
+            onClick={onStartEdit}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-600 hover:text-white bg-white/80 hover:bg-[var(--primary)] backdrop-blur-md border border-slate-200/40 rounded-lg transition-all duration-200 cursor-pointer shadow-sm hover:shadow-md active:scale-95"
+          >
+            <Edit3 size={13} />
+            <span>编辑</span>
+          </button>
+        </div>
+      )}
       {/* 缩放工具栏 */}
-      <div className="flex items-center justify-center gap-0.5 py-1 border-b border-[var(--border)] bg-white shrink-0 z-10">
-        <button onClick={() => adjustScale(-0.05)} className="p-1 text-[var(--text-muted)] hover:text-[var(--text-primary)] bg-transparent border-0 cursor-pointer rounded transition-colors focus:outline-none"><ZoomOut size={13} /></button>
-        <span className="text-xs text-[var(--text-muted)] w-10 text-center tabular-nums">{Math.round(scale * 100)}%</span>
-        <button onClick={() => adjustScale(0.05)} className="p-1 text-[var(--text-muted)] hover:text-[var(--text-primary)] bg-transparent border-0 cursor-pointer rounded transition-colors focus:outline-none"><ZoomIn size={13} /></button>
-      </div>
+      {authorized && (
+        <div className="flex items-center justify-center gap-0.5 py-1 border-b border-[var(--border)] bg-white shrink-0 z-10">
+          <button onClick={() => adjustScale(-0.05)} className="p-1 text-[var(--text-muted)] hover:text-[var(--text-primary)] bg-transparent border-0 cursor-pointer rounded transition-colors focus:outline-none"><ZoomOut size={13} /></button>
+          <span className="text-xs text-[var(--text-muted)] w-10 text-center tabular-nums">{Math.round(scale * 100)}%</span>
+          <button onClick={() => adjustScale(0.05)} className="p-1 text-[var(--text-muted)] hover:text-[var(--text-primary)] bg-transparent border-0 cursor-pointer rounded transition-colors focus:outline-none"><ZoomIn size={13} /></button>
+        </div>
+      )}
 
       {/* 隐藏的测量沙盒容器 - 使用与真实 A4 页面完全一致的宽度和 padding，并加上 boxSizing: border-box */}
       <div
@@ -154,7 +222,7 @@ export default function PreviewPanel() {
         className="absolute opacity-0 pointer-events-none break-all tracking-wide text-gray-800"
         style={{
           width: A4_W,
-          padding: `48px 52px`,
+          padding: `${A4_PADDING_Y}px ${A4_PADDING_X}px`,
           left: -9999,
           top: -9999,
           fontFamily: fontFamilyValue,
@@ -167,7 +235,17 @@ export default function PreviewPanel() {
       </div>
 
       {/* 真实渲染预览滚动区 */}
-      <div ref={containerRef} className="flex-1 overflow-y-auto overflow-x-auto p-6 flex flex-col items-center">
+      <div 
+        ref={containerRef} 
+        onClick={!authorized ? onStartEdit : undefined}
+        className={`flex-1 overflow-y-auto overflow-x-auto p-6 flex flex-col items-center group relative ${!authorized ? 'cursor-pointer select-none' : ''}`}
+      >
+        {!authorized && (
+          <div className="absolute top-4 left-1/2 -translate-x-1/2 bg-slate-900/80 text-white text-xs py-1.5 px-4 rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-30 flex items-center gap-1.5 backdrop-blur-sm">
+            <Lightbulb size={13} className="text-amber-400" />
+            <span>点击任意区域输入密码开始编辑</span>
+          </div>
+        )}
         {/* 缩放物理包裹层 */}
         <div
           style={{
@@ -200,7 +278,7 @@ export default function PreviewPanel() {
                 style={{
                   width: A4_W,
                   height: A4_H,
-                  padding: '48px 52px',
+                  padding: `${A4_PADDING_Y}px ${A4_PADDING_X}px`,
                   boxSizing: 'border-box',
                 }}
               >
