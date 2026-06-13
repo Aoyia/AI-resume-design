@@ -124,6 +124,10 @@ interface ResumeStore {
 
   // 修改模块名称
   updateSectionTitle: (key: SectionKey, title: string) => void;
+
+  // 临时交互：当前聚焦/展开的模块
+  activeSection: SectionKey | null;
+  setActiveSection: (key: SectionKey | null) => void;
 }
 
 // ─── 通用列表更新 helper ───────────────────────────────────
@@ -712,11 +716,13 @@ export const useResumeStore = create<ResumeStore>()(
             resume: nextResume,
           };
         }),
+      activeSection: null,
+      setActiveSection: (activeSection) => set({ activeSection }),
     })),
     {
       name: 'resume_local_draft',
       partialize: (state) => {
-        const { pages, ...rest } = state;
+        const { pages, activeSection, setActiveSection, ...rest } = state;
         return rest;
       },
       onRehydrateStorage: () => (state) => {
