@@ -4,6 +4,7 @@ import { useResumeStore } from '@/store/useResumeStore';
 import ClassicTemplate, { getFlatElements, FONT_FALLBACKS } from '@/components/templates/ClassicTemplate';
 import { useEffect, useRef, useState } from 'react';
 import { ZoomIn, ZoomOut, Download, Image as ImageIcon, Loader2, Edit3, Lightbulb } from 'lucide-react';
+import AnimateEntrance from '@/components/shared/AnimateEntrance';
 
 import { A4_W, A4_H, A4_PADDING_Y, A4_PADDING_X, A4_SAFE_CONTENT_H } from '@/lib/a4Constants';
 
@@ -235,16 +236,30 @@ export default function PreviewPanel({ authorized, onStartEdit }: PreviewPanelPr
       </div>
 
       {/* 真实渲染预览滚动区 */}
-      <div 
-        ref={containerRef} 
-        onClick={!authorized ? onStartEdit : undefined}
+      <AnimateEntrance
+        type="bg-blur"
+        delay={0}
+        duration={900}
         className={`flex-1 overflow-y-auto overflow-x-auto p-6 flex flex-col items-center group relative ${!authorized ? 'cursor-pointer select-none' : ''}`}
+        style={{ width: '100%', height: '100%' }}
       >
+        <div 
+          ref={containerRef} 
+          onClick={!authorized ? onStartEdit : undefined}
+          className="w-full h-full flex flex-col items-center"
+        >
         {!authorized && (
-          <div className="absolute top-4 left-1/2 -translate-x-1/2 bg-slate-900/80 text-white text-xs py-1.5 px-4 rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-30 flex items-center gap-1.5 backdrop-blur-sm">
-            <Lightbulb size={13} className="text-amber-400" />
-            <span>点击任意区域输入密码开始编辑</span>
-          </div>
+          <AnimateEntrance
+            type="fade-scale"
+            delay={350}
+            duration={450}
+            className="absolute top-4 left-1/2 -translate-x-1/2 z-30 pointer-events-none"
+          >
+            <div className="bg-slate-900/80 text-white text-xs py-1.5 px-4 rounded-full shadow-lg flex items-center gap-1.5 backdrop-blur-sm">
+              <Lightbulb size={13} className="text-amber-400" />
+              <span>点击任意区域输入密码开始编辑</span>
+            </div>
+          </AnimateEntrance>
         )}
         {/* 缩放物理包裹层 */}
         <div
@@ -272,26 +287,35 @@ export default function PreviewPanel({ authorized, onStartEdit }: PreviewPanelPr
             }}
           >
             {displayPages.map((indices, pageIdx) => (
-              <div
+              <AnimateEntrance
                 key={pageIdx}
-                className="paper-shadow bg-white shrink-0 relative overflow-hidden"
-                style={{
-                  width: A4_W,
-                  height: A4_H,
-                  padding: `${A4_PADDING_Y}px ${A4_PADDING_X}px`,
-                  boxSizing: 'border-box',
-                }}
+                type="fade-slide"
+                direction="up"
+                distance={35}
+                delay={120 + pageIdx * 80}
+                duration={750}
               >
-                {/* 装饰用页码 */}
-                <div className="absolute right-6 bottom-4 text-[10px] text-[var(--text-muted)] select-none">
-                  第 {pageIdx + 1} 页 / 共 {pagesCount} 页
+                <div
+                  className="paper-shadow bg-white shrink-0 relative overflow-hidden"
+                  style={{
+                    width: A4_W,
+                    height: A4_H,
+                    padding: `${A4_PADDING_Y}px ${A4_PADDING_X}px`,
+                    boxSizing: 'border-box',
+                  }}
+                >
+                  {/* 装饰用页码 */}
+                  <div className="absolute right-6 bottom-4 text-[10px] text-[var(--text-muted)] select-none">
+                    第 {pageIdx + 1} 页 / 共 {pagesCount} 页
+                  </div>
+                  <ClassicTemplate data={debouncedResume} elementIndices={indices} />
                 </div>
-                <ClassicTemplate data={debouncedResume} elementIndices={indices} />
-              </div>
+              </AnimateEntrance>
             ))}
           </div>
         </div>
-      </div>
+        </div>
+      </AnimateEntrance>
     </div>
   );
 }
