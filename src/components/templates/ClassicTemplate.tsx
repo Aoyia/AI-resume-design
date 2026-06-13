@@ -742,6 +742,7 @@ export function getFlatElements(data: ResumeData): React.ReactElement[] {
 interface ClassicTemplateProps {
   data: ResumeData;
   elementIndices?: number[];
+  onStartEdit?: () => void;
 }
 
 export const FONT_FALLBACKS: Record<string, string> = {
@@ -751,9 +752,13 @@ export const FONT_FALLBACKS: Record<string, string> = {
 };
 
 
-export default function ClassicTemplate({ data, elementIndices }: ClassicTemplateProps) {
+export default function ClassicTemplate({ data, elementIndices, onStartEdit }: ClassicTemplateProps) {
   const flatElements = getFlatElements(data);
   const fontFamilyValue = FONT_FALLBACKS[data.theme.fontFamily] || data.theme.fontFamily;
+
+  const renderedElements = elementIndices
+    ? elementIndices.map((idx) => flatElements[idx] || null)
+    : flatElements;
 
   return (
     <div
@@ -764,9 +769,20 @@ export default function ClassicTemplate({ data, elementIndices }: ClassicTemplat
         lineHeight: data.theme.lineHeight,
       }}
     >
-      {elementIndices
-        ? elementIndices.map((idx) => flatElements[idx] || null)
-        : flatElements}
+      {renderedElements.map((el, index) => {
+        if (!el) return null;
+        if (onStartEdit) {
+          return React.cloneElement(el, {
+            key: el.key || index,
+            onClick: (e: React.MouseEvent) => {
+              e.stopPropagation();
+              onStartEdit();
+            },
+            className: `${el.props.className || ''} cursor-pointer hover:bg-slate-50/50 rounded transition-all duration-150`
+          });
+        }
+        return el;
+      })}
     </div>
   );
 }

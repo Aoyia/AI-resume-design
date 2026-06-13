@@ -240,27 +240,13 @@ export default function PreviewPanel({ authorized, onStartEdit }: PreviewPanelPr
         type="bg-blur"
         delay={0}
         duration={900}
-        className={`flex-1 overflow-y-auto overflow-x-auto p-6 flex flex-col items-center group relative ${!authorized ? 'cursor-pointer select-none' : ''}`}
+        className={`flex-1 overflow-y-auto overflow-x-auto p-6 flex flex-col items-center group relative ${!authorized ? 'select-none' : ''}`}
         style={{ width: '100%', height: '100%' }}
       >
         <div 
           ref={containerRef} 
-          onClick={!authorized ? onStartEdit : undefined}
           className="w-full h-full flex flex-col items-center"
         >
-        {!authorized && (
-          <AnimateEntrance
-            type="fade-scale"
-            delay={350}
-            duration={450}
-            className="absolute top-4 left-1/2 -translate-x-1/2 z-30 pointer-events-none"
-          >
-            <div className="bg-slate-900/80 text-white text-xs py-1.5 px-4 rounded-full shadow-lg flex items-center gap-1.5 backdrop-blur-sm">
-              <Lightbulb size={13} className="text-amber-400" />
-              <span>点击任意区域输入密码开始编辑</span>
-            </div>
-          </AnimateEntrance>
-        )}
         {/* 缩放物理包裹层 */}
         <div
           style={{
@@ -308,7 +294,7 @@ export default function PreviewPanel({ authorized, onStartEdit }: PreviewPanelPr
                   <div className="absolute right-6 bottom-4 text-[10px] text-[var(--text-muted)] select-none">
                     第 {pageIdx + 1} 页 / 共 {pagesCount} 页
                   </div>
-                  <ClassicTemplate data={debouncedResume} elementIndices={indices} />
+                  <ClassicTemplate data={debouncedResume} elementIndices={indices} onStartEdit={!authorized ? onStartEdit : undefined} />
                 </div>
               </AnimateEntrance>
             ))}
