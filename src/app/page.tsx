@@ -75,72 +75,64 @@ export default function EditorPage() {
 
   return (
     <div className="h-screen flex flex-col overflow-hidden bg-slate-50">
-      {checking ? (
-        <div className="h-screen flex items-center justify-center bg-slate-50 text-slate-400 font-medium text-sm">
-          正在验证授权信息...
-        </div>
-      ) : (
-        <>
-          {authorized && (
-            <Toolbar 
-              authorized={authorized} 
-              onStartEdit={handleStartEdit} 
-              onLogout={handleLogout} 
-            />
-          )}
-          <div className="flex flex-1 overflow-hidden">
-            {/* 左侧编辑面板 */}
-            <aside
-              style={{ 
-                width: authorized ? editorWidth : 0,
-                opacity: authorized ? 1 : 0,
-                visibility: authorized ? 'visible' : 'hidden',
-                transition: 'width 0.25s ease-out, opacity 0.2s ease-out, visibility 0.25s'
-              }}
-              className="shrink-0 border-r border-[var(--border)] bg-white overflow-hidden flex flex-col"
-            >
-              <EditorPanel />
-            </aside>
+      {authorized && !checking && (
+        <Toolbar 
+          authorized={authorized} 
+          onStartEdit={handleStartEdit} 
+          onLogout={handleLogout} 
+        />
+      )}
+      <div className="flex flex-1 overflow-hidden">
+        {/* 左侧编辑面板 */}
+        <aside
+          style={{ 
+            width: authorized && !checking ? editorWidth : 0,
+            opacity: authorized && !checking ? 1 : 0,
+            visibility: authorized && !checking ? 'visible' : 'hidden',
+            transition: 'width 0.25s ease-out, opacity 0.2s ease-out, visibility 0.25s'
+          }}
+          className="shrink-0 border-r border-[var(--border)] bg-white overflow-hidden flex flex-col"
+        >
+          <EditorPanel />
+        </aside>
 
-            {/* 可拖拽分割条 */}
-            {authorized && (
-              <div
-                ref={resizerRef}
-                onMouseDown={onMouseDown}
-                className="group relative w-1 shrink-0 bg-[var(--border)] hover:bg-[var(--primary)] transition-colors duration-150 cursor-col-resize z-10 flex items-center justify-center"
-                title="拖动以调整面板宽度"
-              >
-                {/* 拖动时的高亮指示条 */}
-                <div className="absolute inset-y-0 -left-1 -right-1" />
-                {/* 中央拖动把手点 */}
-                <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-150 flex flex-col gap-0.5 pointer-events-none">
-                  <div className="w-1 h-1 rounded-full bg-[var(--primary)]" />
-                  <div className="w-1 h-1 rounded-full bg-[var(--primary)]" />
-                  <div className="w-1 h-1 rounded-full bg-[var(--primary)]" />
-                </div>
-              </div>
-            )}
-
-            {/* 右侧预览面板 */}
-            <main className="flex-1 overflow-hidden min-w-0 bg-slate-100">
-              <PreviewPanel 
-                authorized={authorized} 
-                onStartEdit={handleStartEdit} 
-              />
-            </main>
+        {/* 可拖拽分割条 */}
+        {authorized && !checking && (
+          <div
+            ref={resizerRef}
+            onMouseDown={onMouseDown}
+            className="group relative w-1 shrink-0 bg-[var(--border)] hover:bg-[var(--primary)] transition-colors duration-150 cursor-col-resize z-10 flex items-center justify-center"
+            title="拖动以调整面板宽度"
+          >
+            {/* 拖动时的高亮指示条 */}
+            <div className="absolute inset-y-0 -left-1 -right-1" />
+            {/* 中央拖动把手点 */}
+            <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-150 flex flex-col gap-0.5 pointer-events-none">
+              <div className="w-1 h-1 rounded-full bg-[var(--primary)]" />
+              <div className="w-1 h-1 rounded-full bg-[var(--primary)]" />
+              <div className="w-1 h-1 rounded-full bg-[var(--primary)]" />
+            </div>
           </div>
+        )}
 
-          {/* 专属密码校验弹窗 */}
-          {isPasswordModalOpen && (
-            <PasswordGate 
-              onSuccess={() => {
-                setAuthorized(true);
-                setIsPasswordModalOpen(false);
-              }} 
-              onClose={() => setIsPasswordModalOpen(false)} 
-            />
-          )}
-        </>
+        {/* 右侧预览面板 */}
+        <main className="flex-1 overflow-hidden min-w-0 bg-slate-100">
+          <PreviewPanel 
+            authorized={authorized && !checking} 
+            onStartEdit={handleStartEdit} 
+          />
+        </main>
+      </div>
+
+      {/* 专属密码校验弹窗 */}
+      {isPasswordModalOpen && (
+        <PasswordGate 
+          onSuccess={() => {
+            setAuthorized(true);
+            setIsPasswordModalOpen(false);
+          }} 
+          onClose={() => setIsPasswordModalOpen(false)} 
+        />
       )}
     </div>
   );
