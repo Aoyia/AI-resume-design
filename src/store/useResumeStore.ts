@@ -140,6 +140,8 @@ function reorderList<T extends { id: string }>(list: T[], orderedIds: string[]):
 function cleanResumeData(r: ResumeData): ResumeData {
   if (!r) return r;
 
+  const copy = { ...r };
+
   const cleanDescription = (desc: string) => {
     if (!desc) return desc;
     return desc
@@ -157,17 +159,14 @@ function cleanResumeData(r: ResumeData): ResumeData {
       .join('\n');
   };
 
-  if (r.projects && Array.isArray(r.projects)) {
-    return {
-      ...r,
-      projects: r.projects.map((p) => ({
-        ...p,
-        description: cleanDescription(p.description || ''),
-      })),
-    };
+  if (copy.projects && Array.isArray(copy.projects)) {
+    copy.projects = copy.projects.map((p) => ({
+      ...p,
+      description: cleanDescription(p.description || ''),
+    }));
   }
 
-  return r;
+  return copy;
 }
 
 // ─── 多简历同步中间件 ───────────────────────────────────────
@@ -183,7 +182,7 @@ const syncResumesMiddleware = <T extends ResumeStore>(
         if (nextState.resume) {
           const updatedResume = nextState.resume;
           const currentResumes = nextState.resumes || state.resumes || [];
-          const currentId = nextState.currentResumeId || state.currentResumeId || updatedResume.id;
+          const currentId = updatedResume.id || nextState.currentResumeId || state.currentResumeId;
 
           let newResumes = [...currentResumes];
           if (newResumes.length === 0) {

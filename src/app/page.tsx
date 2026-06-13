@@ -4,7 +4,6 @@ import Toolbar from '@/components/editor/Toolbar';
 import EditorPanel from '@/components/editor/EditorPanel';
 import PreviewPanel from '@/components/editor/PreviewPanel';
 import PasswordGate from '@/components/editor/PasswordGate';
-import { Modal } from '@arco-design/web-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 const MIN_WIDTH = 260;
@@ -68,14 +67,8 @@ export default function EditorPage() {
   };
 
   const handleLogout = () => {
-    Modal.confirm({
-      title: '切回纯净预览确认',
-      content: '确定锁定编辑模式并切回纯净预览？本地草稿不会丢失。',
-      onOk: () => {
-        localStorage.removeItem('resume_sys_auth');
-        setAuthorized(false);
-      }
-    });
+    localStorage.removeItem('resume_sys_auth');
+    setAuthorized(false);
   };
 
   return (

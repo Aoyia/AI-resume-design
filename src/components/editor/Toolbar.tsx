@@ -7,7 +7,7 @@ import { useAuthStore } from '@/store/useAuthStore';
 import LoginModal from './LoginModal';
 import { cn } from '@/lib/utils';
 import { ResumeTheme } from '@/types/resume';
-import { Select, Switch, Dropdown, Menu, Input, Modal, Message } from '@arco-design/web-react';
+import { Select, Switch, Dropdown, Menu, Input, Modal, Message, Popconfirm } from '@arco-design/web-react';
 
 const THEME_COLORS = [
   { label: '智慧紫', value: '#7C3AED' },
@@ -59,17 +59,7 @@ export default function Toolbar({ authorized, onStartEdit, onLogout }: ToolbarPr
     createResume();
   };
 
-  const handleDelete = (id: string, name: string) => {
-    Modal.confirm({
-      title: '删除简历确认',
-      content: `确定删除简历“${name || '未命名'}”吗？此操作不可撤销。`,
-      okButtonProps: { status: 'danger' },
-      onOk: () => {
-        deleteResume(id);
-        Message.success('简历删除成功');
-      }
-    });
-  };
+
 
   const handleRenameConfirm = (id: string) => {
     if (renameValue.trim()) {
@@ -276,23 +266,25 @@ export default function Toolbar({ authorized, onStartEdit, onLogout }: ToolbarPr
       {authorized && (
         <>
           <div className="h-px bg-slate-100 my-1 mx-1.5" />
-          <button
-            onClick={() => {
-              Modal.confirm({
-                title: '重置简历确认',
-                content: '确定重置所有内容？此操作将清空当前简历的所有编辑内容，且无法撤销。',
-                okButtonProps: { status: 'danger' },
-                onOk: () => {
-                  resetResume();
-                  Message.success('简历内容已重置');
-                }
-              });
+          <Popconfirm
+            focusLock
+            title="确定重置所有内容吗？"
+            content="此操作将清空当前简历的所有编辑内容，且无法撤销。"
+            okButtonProps={{ status: 'danger' }}
+            onOk={() => {
+              resetResume();
+              Message.success('简历内容已重置');
             }}
-            className="flex items-center gap-2 px-2.5 py-1.5 text-[11px] font-medium text-red-500 hover:text-red-600 hover:bg-red-50/50 rounded-lg transition-colors border-0 cursor-pointer bg-transparent w-full text-left"
+            okText="确定"
+            cancelText="取消"
           >
-            <RotateCcw size={13} className="text-red-400" />
-            <span>重置简历</span>
-          </button>
+            <button
+              className="flex items-center gap-2 px-2.5 py-1.5 text-[11px] font-medium text-red-500 hover:text-red-600 hover:bg-red-50/50 rounded-lg transition-colors border-0 cursor-pointer bg-transparent w-full text-left"
+            >
+              <RotateCcw size={13} className="text-red-400" />
+              <span>重置简历</span>
+            </button>
+          </Popconfirm>
         </>
       )}
     </div>
@@ -483,13 +475,25 @@ export default function Toolbar({ authorized, onStartEdit, onLogout }: ToolbarPr
                                 <Edit3 size={11} />
                               </button>
                               {resumes.length > 1 && (
-                                <button
-                                  onClick={() => handleDelete(r.id, r.resumeName || `${r.basicInfo.name || '未命名'}_简历`)}
-                                  title="删除"
-                                  className="p-1 hover:bg-red-50 text-slate-400 hover:text-red-600 rounded cursor-pointer bg-transparent border-0 focus:outline-none"
+                                <Popconfirm
+                                  focusLock
+                                  title="确定删除此简历吗？"
+                                  content="删除后将无法恢复，确认删除？"
+                                  okButtonProps={{ status: 'danger' }}
+                                  onOk={() => {
+                                    deleteResume(r.id);
+                                    Message.success('简历删除成功');
+                                  }}
+                                  okText="确定"
+                                  cancelText="取消"
                                 >
-                                  <Trash2 size={11} />
-                                </button>
+                                  <button
+                                    title="删除"
+                                    className="p-1 hover:bg-red-50 text-slate-400 hover:text-red-600 rounded cursor-pointer bg-transparent border-0 focus:outline-none"
+                                  >
+                                    <Trash2 size={11} />
+                                  </button>
+                                </Popconfirm>
                               )}
                             </div>
                           </>
@@ -764,13 +768,22 @@ export default function Toolbar({ authorized, onStartEdit, onLogout }: ToolbarPr
             开始编辑
           </button>
         ) : (
-          <button
-            onClick={onLogout}
-            className="flex items-center justify-center p-1.5 text-red-600 hover:text-red-700 hover:bg-red-50/60 active:scale-90 bg-transparent border-0 cursor-pointer select-none rounded-lg transition-all duration-150 focus:outline-none"
-            title="锁定编辑并返回纯净预览"
+          <Popconfirm
+            focusLock
+            position="br"
+            title="确定要锁定编辑吗？"
+            content="切回纯净预览模式，本地草稿不会丢失。"
+            onOk={onLogout}
+            okText="确定"
+            cancelText="取消"
           >
-            <LogOut size={14} />
-          </button>
+            <button
+              className="flex items-center justify-center p-1.5 text-red-600 hover:text-red-700 hover:bg-red-50/60 active:scale-90 bg-transparent border-0 cursor-pointer select-none rounded-lg transition-all duration-150 focus:outline-none"
+              title="锁定编辑并返回纯净预览"
+            >
+              <LogOut size={14} />
+            </button>
+          </Popconfirm>
         )}
       </div>
 

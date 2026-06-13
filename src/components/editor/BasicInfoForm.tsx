@@ -2,6 +2,7 @@
 
 import { useState, useRef } from 'react';
 import { Upload, Trash2, Link as LinkIcon } from 'lucide-react';
+import { Message } from '@arco-design/web-react';
 import Input from '@/components/ui/Input';
 import { useResumeStore } from '@/store/useResumeStore';
 
@@ -13,7 +14,7 @@ export default function BasicInfoForm() {
 
   const handleFile = (file: File) => {
     if (!file.type.startsWith('image/')) {
-      alert('请上传图片文件');
+      Message.error('请上传图片文件');
       return;
     }
     const reader = new FileReader();
