@@ -201,10 +201,10 @@ export default function PreviewPanel({ authorized, onStartEdit }: PreviewPanelPr
         <div className="absolute top-4 right-4 z-40 select-none">
           <button 
             onClick={onStartEdit}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-600 hover:text-white bg-white/80 hover:bg-[var(--primary)] backdrop-blur-md border border-slate-200/40 rounded-lg transition-all duration-200 cursor-pointer shadow-sm hover:shadow-md active:scale-95"
+            title="编辑"
+            className="flex items-center justify-center p-2 text-slate-600 hover:text-white bg-white/80 hover:bg-[var(--primary)] backdrop-blur-md border border-slate-200/40 rounded-lg transition-all duration-200 cursor-pointer shadow-sm hover:shadow-md active:scale-95"
           >
-            <Edit3 size={13} />
-            <span>编辑</span>
+            <Edit3 size={14} />
           </button>
         </div>
       )}
