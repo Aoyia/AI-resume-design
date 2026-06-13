@@ -595,7 +595,12 @@ export const useResumeStore = create<ResumeStore>()(
         set((s) => ({ resume: { ...s.resume, sectionOrder: order } })),
 
       // 重置
-      resetResume: () => set((s) => ({ resume: createEmptyResume(s.currentResumeId) })),
+      resetResume: () =>
+        set((s) => {
+          const emptyResume = createEmptyResume(s.currentResumeId);
+          emptyResume.resumeName = s.resume.resumeName;
+          return { resume: emptyResume };
+        }),
 
       // 修改模块名称
       updateSectionTitle: (key, title) =>
