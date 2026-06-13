@@ -43,3 +43,8 @@ next-env.d.ts
 # git worktrees
 .worktrees/
 
+# docs & blog (local only)
+/简历预览视差动效与环境光晕优化.md
+/docs/images/
+/docs/videos/
+
