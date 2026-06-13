@@ -4,6 +4,7 @@ import React from 'react';
 import { ResumeData, ResumeTheme } from '@/types/resume';
 import ReactMarkdown from 'react-markdown';
 import AnimateEntrance from '@/components/shared/AnimateEntrance';
+import { useResumeStore } from '@/store/useResumeStore';
 
 /** 单一段落的 Markdown 渲染（bullet points 等） */
 function MdContent({ content }: { content: string }) {
