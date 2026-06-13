@@ -22,21 +22,21 @@ export interface AnimateEntranceProps {
 }
 
 // 物理动效三次贝塞尔曲线常量
-const SPRING_CRITICAL = 'cubic-bezier(0.16, 1, 0.3, 1)'; // 临界阻尼 (无回弹)
+const SPRING_CRITICAL = 'cubic-bezier(0.21, 1.02, 0.43, 1.01)'; // 优雅阻尼 (无回弹)
 const SPRING_BOUNCE = 'cubic-bezier(0.34, 1.56, 0.64, 1)'; // 轻微弹性
 
 export default function AnimateEntrance({
   children,
   type = 'fade-slide',
   direction = 'up',
-  distance = 35,
+  distance = 60,
   delay = 0,
   duration = 600,
   className = '',
   style = {},
 }: AnimateEntranceProps) {
   const [isAnimate, setIsAnimate] = useState(false);
-  const [shouldSkip, setShouldSkip] = useState(true);
+  const [shouldSkip, setShouldSkip] = useState(false);
 
   useEffect(() => {
     // 1. SSR 退化防抖：确保仅在客户端渲染时激活
@@ -48,8 +48,6 @@ export default function AnimateEntrance({
       setShouldSkip(true);
       return;
     }
-
-    setShouldSkip(false);
     
     // 启动延迟器，在特定 delay 之后激活 style 过渡状态
     const timer = setTimeout(() => {

@@ -239,7 +239,7 @@ export default function PreviewPanel({ authorized, onStartEdit }: PreviewPanelPr
       <AnimateEntrance
         type="bg-blur"
         delay={0}
-        duration={900}
+        duration={1400}
         className={`flex-1 overflow-y-auto overflow-x-auto p-6 flex flex-col items-center group relative ${!authorized ? 'select-none' : ''}`}
         style={{ width: '100%', height: '100%' }}
       >
@@ -277,9 +277,9 @@ export default function PreviewPanel({ authorized, onStartEdit }: PreviewPanelPr
                 key={pageIdx}
                 type="fade-slide"
                 direction="up"
-                distance={35}
-                delay={120 + pageIdx * 80}
-                duration={750}
+                distance={60}
+                delay={120 + pageIdx * 150}
+                duration={1100}
               >
                 <div
                   className="paper-shadow bg-white shrink-0 relative overflow-hidden"
