@@ -1,13 +1,13 @@
 'use client';
 
-import { Download, RotateCcw, Cloud, CloudOff, LogOut, User, Sliders, Image as ImageIcon, Loader2, Layers, Plus, Trash2, Edit3, FileUp, FileDown, Database, Check, Sparkles } from 'lucide-react';
+import { Download, RotateCcw, Cloud, CloudOff, LogOut, User, Sliders, Image as ImageIcon, Loader2, Layers, Plus, Trash2, Edit3, FileUp, FileDown, Database, Check, Sparkles, X } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import { useResumeStore } from '@/store/useResumeStore';
 import { useAuthStore } from '@/store/useAuthStore';
 import LoginModal from './LoginModal';
 import { cn } from '@/lib/utils';
 import { ResumeTheme } from '@/types/resume';
-import { Select, Switch, Dropdown, Menu } from '@arco-design/web-react';
+import { Select, Switch, Dropdown, Menu, Input } from '@arco-design/web-react';
 
 const THEME_COLORS = [
   { label: '智慧紫', value: '#7C3AED' },
@@ -373,67 +373,79 @@ export default function Toolbar({ authorized, onStartEdit, onLogout }: ToolbarPr
                     return (
                       <div
                         key={r.id}
-                        className={`group p-2 rounded-lg border transition-all duration-150 flex items-center justify-between gap-2
+                        className={`group px-2 h-[46px] rounded-lg border transition-all duration-150 flex items-center justify-between gap-2 shrink-0
                           ${isCurrent 
                             ? 'border-[var(--primary)] bg-[var(--primary-light)]/20' 
                             : 'border-slate-100 hover:border-slate-200 hover:bg-slate-50/50'}`}
                       >
                         {isEditing ? (
-                          <div className="flex items-center gap-1.5 flex-1 min-w-0">
-                            <input
-                              type="text"
-                              value={renameValue}
-                              onChange={(e) => setRenameValue(e.target.value)}
-                              onKeyDown={(e) => {
-                                if (e.key === 'Enter') handleRenameConfirm(r.id);
-                                if (e.key === 'Escape') setEditingResumeId(null);
-                              }}
-                              autoFocus
-                              className="w-full text-xs px-1.5 py-0.5 border border-[var(--primary)] rounded focus:outline-none bg-white"
-                            />
-                            <button
-                              onClick={() => handleRenameConfirm(r.id)}
-                              className="text-[var(--primary)] hover:text-[var(--primary-hover)] p-0.5 cursor-pointer bg-transparent border-0 focus:outline-none shrink-0"
-                            >
-                              <Check size={12} />
-                            </button>
-                          </div>
-                        ) : (
-                          <div 
-                            onClick={() => !isCurrent && switchResume(r.id)}
-                            className="flex-1 min-w-0 text-left cursor-pointer select-none"
-                          >
-                            <div className="text-xs font-bold text-slate-700 truncate">
-                              {r.resumeName || `${r.basicInfo.name || '未命名'}_简历`}
+                          <>
+                            <div className="flex-1 min-w-0 flex items-center">
+                              <Input
+                                size="mini"
+                                value={renameValue}
+                                onChange={(val) => setRenameValue(val)}
+                                onPressEnter={() => handleRenameConfirm(r.id)}
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Escape') setEditingResumeId(null);
+                                }}
+                                autoFocus
+                                className="w-full text-xs"
+                                style={{ height: 24 }}
+                              />
                             </div>
-                            <div className="text-[9px] text-slate-400 truncate mt-0.5">
-                              {r.basicInfo.jobTitle || '暂无求职意向'}
-                            </div>
-                          </div>
-                        )}
-
-                        {!isEditing && (
-                          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-150 shrink-0">
-                            <button
-                              onClick={() => {
-                                setEditingResumeId(r.id);
-                                setRenameValue(r.resumeName || `${r.basicInfo.name || '未命名'}_简历`);
-                              }}
-                              title="重命名"
-                              className="p-1 hover:bg-slate-100 text-slate-400 hover:text-slate-600 rounded cursor-pointer bg-transparent border-0 focus:outline-none"
-                            >
-                              <Edit3 size={11} />
-                            </button>
-                            {resumes.length > 1 && (
+                            <div className="flex items-center gap-1 shrink-0 w-[48px] justify-end">
                               <button
-                                onClick={() => handleDelete(r.id, r.resumeName || `${r.basicInfo.name || '未命名'}_简历`)}
-                                title="删除"
-                                className="p-1 hover:bg-red-50 text-slate-400 hover:text-red-600 rounded cursor-pointer bg-transparent border-0 focus:outline-none"
+                                onClick={() => handleRenameConfirm(r.id)}
+                                title="保存"
+                                className="p-1 hover:bg-slate-100 text-slate-500 hover:text-emerald-600 rounded cursor-pointer bg-transparent border-0 focus:outline-none shrink-0"
                               >
-                                <Trash2 size={11} />
+                                <Check size={11} />
                               </button>
-                            )}
-                          </div>
+                              <button
+                                onClick={() => setEditingResumeId(null)}
+                                title="取消"
+                                className="p-1 hover:bg-slate-100 text-slate-400 hover:text-red-600 rounded cursor-pointer bg-transparent border-0 focus:outline-none shrink-0"
+                              >
+                                <X size={11} />
+                              </button>
+                            </div>
+                          </>
+                        ) : (
+                          <>
+                            <div 
+                              onClick={() => !isCurrent && switchResume(r.id)}
+                              className="flex-1 min-w-0 text-left cursor-pointer select-none py-1"
+                            >
+                              <div className="text-xs font-bold text-slate-700 truncate leading-snug">
+                                {r.resumeName || `${r.basicInfo.name || '未命名'}_简历`}
+                              </div>
+                              <div className="text-[9px] text-slate-400 truncate mt-0.5 leading-none">
+                                {r.basicInfo.jobTitle || '暂无求职意向'}
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-150 shrink-0 w-[48px] justify-end">
+                              <button
+                                onClick={() => {
+                                  setEditingResumeId(r.id);
+                                  setRenameValue(r.resumeName || `${r.basicInfo.name || '未命名'}_简历`);
+                                }}
+                                title="重命名"
+                                className="p-1 hover:bg-slate-100 text-slate-400 hover:text-slate-600 rounded cursor-pointer bg-transparent border-0 focus:outline-none"
+                              >
+                                <Edit3 size={11} />
+                              </button>
+                              {resumes.length > 1 && (
+                                <button
+                                  onClick={() => handleDelete(r.id, r.resumeName || `${r.basicInfo.name || '未命名'}_简历`)}
+                                  title="删除"
+                                  className="p-1 hover:bg-red-50 text-slate-400 hover:text-red-600 rounded cursor-pointer bg-transparent border-0 focus:outline-none"
+                                >
+                                  <Trash2 size={11} />
+                                </button>
+                              )}
+                            </div>
+                          </>
                         )}
                       </div>
                     );
