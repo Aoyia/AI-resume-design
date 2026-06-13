@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect } from 'react';
 import { useResumeStore } from '@/store/useResumeStore';
 import Accordion from '@/components/ui/Accordion';
 import { cn } from '@/lib/utils';
@@ -51,6 +52,24 @@ function SortableSection({ id }: { id: SectionKey }) {
   const removeSectionFromOrder = useResumeStore((s) => s.removeSectionFromOrder);
   const customTitles = useResumeStore((s) => s.resume.customTitles);
   const updateSectionTitle = useResumeStore((s) => s.updateSectionTitle);
+
+  const activeSection = useResumeStore((s) => s.activeSection);
+  const setActiveSection = useResumeStore((s) => s.setActiveSection);
+
+  const isCurrentActive = activeSection === id;
+
+  useEffect(() => {
+    if (isCurrentActive) {
+      // 稍微延迟，确保折叠面板开始展开，从而能更准确地滚动到对应位置
+      const timer = setTimeout(() => {
+        const el = document.getElementById(`editor-section-${id}`);
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }, 150);
+      return () => clearTimeout(timer);
+    }
+  }, [isCurrentActive, id]);
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -115,6 +134,7 @@ function SortableSection({ id }: { id: SectionKey }) {
   return (
     <div
       ref={setNodeRef}
+      id={`editor-section-${id}`}
       style={style}
       className={cn(
         "transition-all duration-200 rounded-[var(--radius-md)]",
@@ -123,7 +143,10 @@ function SortableSection({ id }: { id: SectionKey }) {
     >
       <Accordion
         title={title}
-        defaultOpen={id === 'basicInfo'}
+        open={isCurrentActive}
+        onOpenChange={(openState) => {
+          setActiveSection(openState ? id : null);
+        }}
         dragHandle={isFixed ? undefined : dragHandle}
         action={action}
         onTitleChange={(newTitle) => updateSectionTitle(id, newTitle)}
