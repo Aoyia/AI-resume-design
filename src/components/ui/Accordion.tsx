@@ -15,6 +15,8 @@ interface AccordionProps {
   dragHandle?: ReactNode;
   /** 标题修改回调 */
   onTitleChange?: (newTitle: string) => void;
+  open?: boolean; // 新增：外部受控状态
+  onOpenChange?: (open: boolean) => void; // 新增：折叠展开回调
 }
 
 export default function Accordion({
@@ -25,11 +27,23 @@ export default function Accordion({
   action,
   dragHandle,
   onTitleChange,
+  open: controlledOpen,
+  onOpenChange,
 }: AccordionProps) {
-  const [open, setOpen] = useState(defaultOpen);
+  const [isOpenState, setIsOpenState] = useState(defaultOpen);
   const [isEditing, setIsEditing] = useState(false);
   const [editingText, setEditingText] = useState(title);
   const contentRef = useRef<HTMLDivElement>(null);
+
+  const isOpened = controlledOpen !== undefined ? controlledOpen : isOpenState;
+
+  const handleToggle = () => {
+    const nextState = !isOpened;
+    if (controlledOpen === undefined) {
+      setIsOpenState(nextState);
+    }
+    onOpenChange?.(nextState);
+  };
 
   useEffect(() => {
     setEditingText(title);
@@ -40,7 +54,7 @@ export default function Accordion({
       {/* 标题栏 */}
       <div
         className="flex items-center gap-2 select-none cursor-pointer py-2.5 px-1"
-        onClick={() => !isEditing && setOpen((v) => !v)}
+        onClick={() => !isEditing && handleToggle()}
       >
         {dragHandle && (
           <div
@@ -102,7 +116,7 @@ export default function Accordion({
           size={15}
           className={cn(
             'text-[var(--text-muted)] opacity-30 group-hover:opacity-100 transition-all duration-200 shrink-0',
-            open && 'rotate-180'
+            isOpened && 'rotate-180'
           )}
         />
       </div>
@@ -112,9 +126,9 @@ export default function Accordion({
         ref={contentRef}
         className="overflow-hidden transition-all duration-200 ease-out"
         style={{
-          maxHeight: open ? '2000px' : '0px',
-          opacity: open ? 1 : 0,
-          visibility: open ? 'visible' : 'hidden',
+          maxHeight: isOpened ? '2000px' : '0px',
+          opacity: isOpened ? 1 : 0,
+          visibility: isOpened ? 'visible' : 'hidden',
         }}
       >
         <div className="px-1 pb-4 pt-1">{children}</div>
