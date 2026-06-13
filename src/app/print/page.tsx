@@ -6,11 +6,7 @@ import { useEffect, useRef, useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import './print.css';
 
-const A4_W = 794;
-const A4_H = 1123;
-const A4_PADDING_Y = 48;
-const A4_CONTENT_H = A4_H - A4_PADDING_Y * 2;
-const A4_SAFE_CONTENT_H = A4_CONTENT_H - 8; // 8px 安全缓冲区，防止临界渲染超高
+import { A4_W, A4_H, A4_PADDING_Y, A4_PADDING_X, A4_SAFE_CONTENT_H } from '@/lib/a4Constants';
 
 function PrintContent() {
   const searchParams = useSearchParams();
@@ -150,7 +146,7 @@ function PrintContent() {
         className="absolute opacity-0 pointer-events-none break-all tracking-wide text-gray-800"
         style={{
           width: A4_W,
-          padding: '48px 52px',
+          padding: `${A4_PADDING_Y}px ${A4_PADDING_X}px`,
           left: -9999,
           top: -9999,
           fontFamily: fontFamilyValue,
