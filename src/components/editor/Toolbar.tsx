@@ -7,7 +7,7 @@ import { useAuthStore } from '@/store/useAuthStore';
 import LoginModal from './LoginModal';
 import { cn } from '@/lib/utils';
 import { ResumeTheme } from '@/types/resume';
-import { Select, Switch, Dropdown, Menu, Input } from '@arco-design/web-react';
+import { Select, Switch, Dropdown, Menu, Input, Modal, Message } from '@arco-design/web-react';
 
 const THEME_COLORS = [
   { label: '智慧紫', value: '#7C3AED' },
@@ -60,9 +60,15 @@ export default function Toolbar({ authorized, onStartEdit, onLogout }: ToolbarPr
   };
 
   const handleDelete = (id: string, name: string) => {
-    if (confirm(`确定删除简历“${name || '未命名'}”吗？此操作不可撤销。`)) {
-      deleteResume(id);
-    }
+    Modal.confirm({
+      title: '删除简历确认',
+      content: `确定删除简历“${name || '未命名'}”吗？此操作不可撤销。`,
+      okButtonProps: { status: 'danger' },
+      onOk: () => {
+        deleteResume(id);
+        Message.success('简历删除成功');
+      }
+    });
   };
 
   const handleRenameConfirm = (id: string) => {
@@ -84,7 +90,7 @@ export default function Toolbar({ authorized, onStartEdit, onLogout }: ToolbarPr
       a.click();
       URL.revokeObjectURL(url);
     } catch (e) {
-      alert('导出失败，请重试');
+      Message.error('导出失败，请重试');
       console.error(e);
     }
   };
@@ -107,7 +113,7 @@ export default function Toolbar({ authorized, onStartEdit, onLogout }: ToolbarPr
       a.click();
       URL.revokeObjectURL(url);
     } catch (e) {
-      alert('导出失败，请重试');
+      Message.error('导出失败，请重试');
       console.error(e);
     }
   };
@@ -124,19 +130,50 @@ export default function Toolbar({ authorized, onStartEdit, onLogout }: ToolbarPr
 
         // 校验是备份包还是单份简历
         if (parsed.type === 'resume-backup-package' && Array.isArray(parsed.resumes)) {
-          const action = confirm(
-            `检测到备份包中含有 ${parsed.resumes.length} 份简历。\n点击“确定”将覆盖本地所有简历，点击“取消”将合并追加到当前列表。`
-          );
-          importBackupPackage(parsed.resumes, action);
-          alert(action ? '已成功覆盖恢复所有简历！' : '已成功合并追加简历列表！');
+          Modal.confirm({
+            title: '导入备份确认',
+            content: `检测到备份包中含有 ${parsed.resumes.length} 份简历。请选择您的导入方式：`,
+            footer: (okAnchor, cancelAnchor) => {
+              return (
+                <div className="flex justify-end gap-2">
+                  <button
+                    onClick={() => Modal.destroyAll()}
+                    className="px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer border-0 bg-transparent"
+                  >
+                    取消导入
+                  </button>
+                  <button
+                    onClick={() => {
+                      importBackupPackage(parsed.resumes, false);
+                      Message.success('已成功合并追加简历列表！');
+                      Modal.destroyAll();
+                    }}
+                    className="px-3 py-1.5 text-xs font-medium text-indigo-600 hover:bg-indigo-50/50 rounded-lg transition-colors cursor-pointer border border-indigo-200/50 bg-transparent"
+                  >
+                    合并追加列表
+                  </button>
+                  <button
+                    onClick={() => {
+                      importBackupPackage(parsed.resumes, true);
+                      Message.success('已成功覆盖恢复所有简历！');
+                      Modal.destroyAll();
+                    }}
+                    className="px-3 py-1.5 text-xs font-medium text-white bg-red-500 hover:bg-red-600 rounded-lg transition-colors cursor-pointer border-0"
+                  >
+                    覆盖本地简历
+                  </button>
+                </div>
+              );
+            }
+          });
         } else if (parsed.basicInfo && parsed.theme && parsed.sectionOrder) {
           importSingleResume(parsed);
-          alert(`成功导入简历：“${parsed.basicInfo.name || '未命名'}”！已为您切换至该简历。`);
+          Message.success(`成功导入简历：“${parsed.basicInfo.name || '未命名'}”！已为您切换至该简历。`);
         } else {
-          alert('文件格式不正确，未能检测到合法的简历数据字段。');
+          Message.error('文件格式不正确，未能检测到合法的简历数据字段。');
         }
       } catch (err) {
-        alert('文件读取解析失败，请确保上传的是有效的 JSON 备份文件。');
+        Message.error('文件读取解析失败，请确保上传的是有效的 JSON 备份文件。');
         console.error(err);
       }
     };
@@ -186,7 +223,7 @@ export default function Toolbar({ authorized, onStartEdit, onLogout }: ToolbarPr
       a.click();
       URL.revokeObjectURL(url);
     } catch (e) {
-      alert('PDF 生成失败，请稍后重试');
+      Message.error('PDF 生成失败，请稍后重试');
       console.error(e);
     } finally {
       setDownloading(false);
@@ -211,7 +248,7 @@ export default function Toolbar({ authorized, onStartEdit, onLogout }: ToolbarPr
       a.click();
       URL.revokeObjectURL(url);
     } catch (e) {
-      alert('图片生成失败，请稍后重试');
+      Message.error('图片生成失败，请稍后重试');
       console.error(e);
     } finally {
       setExportingImage(false);
@@ -240,7 +277,17 @@ export default function Toolbar({ authorized, onStartEdit, onLogout }: ToolbarPr
         <>
           <div className="h-px bg-slate-100 my-1 mx-1.5" />
           <button
-            onClick={() => { if (confirm('确定重置所有内容？')) resetResume(); }}
+            onClick={() => {
+              Modal.confirm({
+                title: '重置简历确认',
+                content: '确定重置所有内容？此操作将清空当前简历的所有编辑内容，且无法撤销。',
+                okButtonProps: { status: 'danger' },
+                onOk: () => {
+                  resetResume();
+                  Message.success('简历内容已重置');
+                }
+              });
+            }}
             className="flex items-center gap-2 px-2.5 py-1.5 text-[11px] font-medium text-red-500 hover:text-red-600 hover:bg-red-50/50 rounded-lg transition-colors border-0 cursor-pointer bg-transparent w-full text-left"
           >
             <RotateCcw size={13} className="text-red-400" />

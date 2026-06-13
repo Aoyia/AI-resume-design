@@ -5,6 +5,7 @@ import ClassicTemplate, { getFlatElements, FONT_FALLBACKS } from '@/components/t
 import { useEffect, useRef, useState } from 'react';
 import { ZoomIn, ZoomOut, Download, Image as ImageIcon, Loader2, Edit3, Lightbulb } from 'lucide-react';
 import AnimateEntrance from '@/components/shared/AnimateEntrance';
+import { Message } from '@arco-design/web-react';
 
 import { A4_W, A4_H, A4_PADDING_Y, A4_PADDING_X, A4_SAFE_CONTENT_H } from '@/lib/a4Constants';
 
@@ -40,7 +41,7 @@ export default function PreviewPanel({ authorized, onStartEdit }: PreviewPanelPr
       a.click();
       URL.revokeObjectURL(url);
     } catch (e) {
-      alert('PDF 生成失败，请稍后重试');
+      Message.error('PDF 生成失败，请稍后重试');
       console.error(e);
     } finally {
       setDownloading(false);
@@ -65,7 +66,7 @@ export default function PreviewPanel({ authorized, onStartEdit }: PreviewPanelPr
       a.click();
       URL.revokeObjectURL(url);
     } catch (e) {
-      alert('图片生成失败，请稍后重试');
+      Message.error('图片生成失败，请稍后重试');
       console.error(e);
     } finally {
       setExportingImage(false);
