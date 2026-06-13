@@ -245,18 +245,32 @@ export default function PreviewPanel({ authorized, onStartEdit }: PreviewPanelPr
       >
         <div 
           ref={containerRef} 
-          className="w-full h-full flex flex-col items-center"
+          className="w-full h-full flex flex-col items-center relative"
         >
-        {/* 缩放物理包裹层 */}
-        <div
-          style={{
-            width: A4_W * scale,
-            height: scaledHeight,
-            position: 'relative',
-            flexShrink: 0,
-            transition: 'width 0.2s ease-out, height 0.2s ease-out',
-          }}
-        >
+          {/* 高奢动态提取主题色环境光晕 */}
+          <div 
+            className="absolute rounded-full pointer-events-none opacity-[0.18] filter blur-[140px] transition-all duration-1000 ease-in-out"
+            style={{
+              width: '600px',
+              height: '600px',
+              background: `radial-gradient(circle, ${debouncedResume.theme.primaryColor} 0%, transparent 70%)`,
+              left: '50%',
+              top: '50%',
+              transform: 'translate(-50%, -50%)',
+              zIndex: 0,
+            }}
+          />
+          {/* 缩放物理包裹层 */}
+          <div
+            style={{
+              width: A4_W * scale,
+              height: scaledHeight,
+              position: 'relative',
+              flexShrink: 0,
+              zIndex: 10,
+              transition: 'width 0.2s ease-out, height 0.2s ease-out',
+            }}
+          >
           {/* 缩放容器 */}
           <div
             style={{

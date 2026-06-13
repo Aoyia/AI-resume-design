@@ -3,6 +3,7 @@
 import React from 'react';
 import { ResumeData, ResumeTheme } from '@/types/resume';
 import ReactMarkdown from 'react-markdown';
+import AnimateEntrance from '@/components/shared/AnimateEntrance';
 
 /** 单一段落的 Markdown 渲染（bullet points 等） */
 function MdContent({ content }: { content: string }) {
@@ -771,17 +772,30 @@ export default function ClassicTemplate({ data, elementIndices, onStartEdit }: C
     >
       {renderedElements.map((el, index) => {
         if (!el) return null;
-        if (onStartEdit) {
-          return React.cloneElement(el, {
-            key: el.key || index,
-            onClick: (e: React.MouseEvent) => {
-              e.stopPropagation();
-              onStartEdit();
-            },
-            className: `${el.props.className || ''} cursor-pointer hover:bg-slate-50/50 rounded transition-all duration-150`
-          });
-        }
-        return el;
+        const itemKey = el.key || index;
+        
+        // 如果未登录预览态，则注入编辑和悬停变色响应
+        const decoratedEl = onStartEdit ? React.cloneElement(el, {
+          onClick: (e: React.MouseEvent) => {
+            e.stopPropagation();
+            onStartEdit();
+          },
+          className: `${el.props.className || ''} cursor-pointer hover:bg-slate-50/50 rounded transition-all duration-150`
+        }) : el;
+
+        // 为每个文字块加一层 staggered 视差滑升动画
+        return (
+          <AnimateEntrance
+            key={itemKey}
+            type="fade-slide"
+            direction="up"
+            distance={12}
+            delay={200 + index * 25}
+            duration={800}
+          >
+            {decoratedEl}
+          </AnimateEntrance>
+        );
       })}
     </div>
   );
