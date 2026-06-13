@@ -5,6 +5,7 @@ import { useAuthStore } from '@/store/useAuthStore';
 import Modal from '@/components/ui/Modal';
 import Input from '@/components/ui/Input';
 import Button from '@/components/ui/Button';
+import { Info } from 'lucide-react';
 
 interface LoginModalProps {
   isOpen: boolean;
@@ -40,14 +41,17 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="用户登录">
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-        <p className="text-xs text-[var(--text-muted)] bg-[var(--surface)] p-3 rounded-lg border border-[var(--border)] leading-relaxed">
-          💡 本系统为免登录设计，不登录也可正常制作与导出。
-          <br />
-          登录仅作演示同步，演示账号为：
-          <span className="font-semibold text-[var(--text-primary)]">admin</span>
-          ，密码：
-          <span className="font-semibold text-[var(--text-primary)]">123456</span>。
-        </p>
+        <div className="text-xs text-[var(--text-muted)] bg-[var(--surface)] p-3 rounded-lg border border-[var(--border)] leading-relaxed flex items-start gap-1.5">
+          <Info size={14} className="text-indigo-500 shrink-0 mt-0.5" />
+          <div>
+            本系统为免登录设计，不登录也可正常制作与导出。
+            <br />
+            登录仅作演示同步，演示账号为：
+            <span className="font-semibold text-[var(--text-primary)]">admin</span>
+            ，密码：
+            <span className="font-semibold text-[var(--text-primary)]">123456</span>。
+          </div>
+        </div>
 
         <Input
           label="用户名"

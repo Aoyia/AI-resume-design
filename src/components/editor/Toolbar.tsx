@@ -1,13 +1,13 @@
 'use client';
 
-import { Download, RotateCcw, Cloud, CloudOff, LogOut, User, Sliders, Image as ImageIcon, Loader2, Layers, Plus, Trash2, Edit3, FileUp, FileDown, Database, Check } from 'lucide-react';
+import { Download, RotateCcw, Cloud, CloudOff, LogOut, User, Sliders, Image as ImageIcon, Loader2, Layers, Plus, Trash2, Edit3, FileUp, FileDown, Database, Check, Sparkles } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import { useResumeStore } from '@/store/useResumeStore';
 import { useAuthStore } from '@/store/useAuthStore';
 import LoginModal from './LoginModal';
 import { cn } from '@/lib/utils';
 import { ResumeTheme } from '@/types/resume';
-import { Select, Switch } from '@arco-design/web-react';
+import { Select, Switch, Dropdown, Menu } from '@arco-design/web-react';
 
 const THEME_COLORS = [
   { label: '智慧紫', value: '#7C3AED' },
@@ -20,7 +20,13 @@ const THEME_COLORS = [
   { label: '经典红', value: '#DC2626' },
 ];
 
-export default function Toolbar() {
+interface ToolbarProps {
+  authorized: boolean;
+  onStartEdit: () => void;
+  onLogout: () => void;
+}
+
+export default function Toolbar({ authorized, onStartEdit, onLogout }: ToolbarProps) {
   const { 
     resume, updateTheme, resetResume,
     resumes, currentResumeId, switchResume, createResume, deleteResume, renameResume,
@@ -212,6 +218,39 @@ export default function Toolbar() {
     }
   };
 
+  const exportMenu = (
+    <div className="bg-white/95 backdrop-blur-sm border border-slate-200/50 rounded-xl shadow-xl p-1 flex flex-col gap-0.5 min-w-[125px] select-none z-50">
+      <button
+        onClick={handleDownloadPDF}
+        disabled={downloading}
+        className="flex items-center gap-2 px-2.5 py-1.5 text-[11px] font-medium text-slate-600 hover:text-indigo-600 hover:bg-slate-50 rounded-lg transition-colors border-0 cursor-pointer bg-transparent w-full text-left disabled:opacity-50 disabled:cursor-not-allowed"
+      >
+        {downloading ? <Loader2 size={13} className="animate-spin text-slate-400" /> : <Download size={13} className="text-slate-400" />}
+        <span>下载 PDF</span>
+      </button>
+      <button
+        onClick={handleDownloadImage}
+        disabled={exportingImage}
+        className="flex items-center gap-2 px-2.5 py-1.5 text-[11px] font-medium text-slate-600 hover:text-indigo-600 hover:bg-slate-50 rounded-lg transition-colors border-0 cursor-pointer bg-transparent w-full text-left disabled:opacity-50 disabled:cursor-not-allowed"
+      >
+        {exportingImage ? <Loader2 size={13} className="animate-spin text-slate-400" /> : <ImageIcon size={13} className="text-slate-400" />}
+        <span>导出图片</span>
+      </button>
+      {authorized && (
+        <>
+          <div className="h-px bg-slate-100 my-1 mx-1.5" />
+          <button
+            onClick={() => { if (confirm('确定重置所有内容？')) resetResume(); }}
+            className="flex items-center gap-2 px-2.5 py-1.5 text-[11px] font-medium text-red-500 hover:text-red-600 hover:bg-red-50/50 rounded-lg transition-colors border-0 cursor-pointer bg-transparent w-full text-left"
+          >
+            <RotateCcw size={13} className="text-red-400" />
+            <span>重置简历</span>
+          </button>
+        </>
+      )}
+    </div>
+  );
+
   return (
     <header className="flex items-center gap-2 px-4 h-11 bg-white border-b border-[var(--border)] shrink-0 z-40">
       {/* Logo */}
@@ -256,43 +295,45 @@ export default function Toolbar() {
       <div className="w-px h-4 bg-[var(--border)]" />
 
       {/* 同步状态指示器 */}
-      <div className="flex items-center gap-1.5 ml-1 select-none">
-        {syncStatus === 'saving' && (
-          <>
-            <Cloud className="w-3.5 h-3.5 text-[var(--primary)] animate-pulse" />
-            <span className="text-xs text-[var(--primary)] font-medium">
-              {isLoggedIn ? '云端同步中...' : '本地保存中...'}
-            </span>
-          </>
-        )}
-        {syncStatus === 'synced' && (
-          <div className={cn(
-            "flex items-center gap-1.5 transition-all duration-300",
-            pulseActive && "scale-105 text-emerald-500"
-          )}>
-            <Cloud className={cn(
-              "w-3.5 h-3.5 transition-colors duration-300",
-              pulseActive ? "text-emerald-500" : "text-emerald-500/80"
-            )} />
-            <span className="text-xs text-emerald-600 font-medium">数据已同步云端</span>
-          </div>
-        )}
-        {syncStatus === 'offline' && (
-          <div className={cn(
-            "flex items-center gap-1.5 transition-all duration-300",
-            pulseActive && "scale-[1.04] text-[var(--primary)]"
-          )}>
-            <CloudOff className={cn(
-              "w-3.5 h-3.5 transition-colors duration-300",
-              pulseActive ? "text-[var(--primary)]" : "text-slate-400"
-            )} />
-            <span className={cn(
-              "text-xs font-medium transition-colors duration-300",
-              pulseActive ? "text-[var(--primary)]" : "text-[var(--text-muted)]"
-            )}>本地草稿已自动保存</span>
-          </div>
-        )}
-      </div>
+      {authorized && (
+        <div className="flex items-center gap-1.5 ml-1 select-none">
+          {syncStatus === 'saving' && (
+            <>
+              <Cloud className="w-3.5 h-3.5 text-[var(--primary)] animate-pulse" />
+              <span className="text-xs text-[var(--primary)] font-medium">
+                {isLoggedIn ? '云端同步中...' : '本地保存中...'}
+              </span>
+            </>
+          )}
+          {syncStatus === 'synced' && (
+            <div className={cn(
+              "flex items-center gap-1.5 transition-all duration-300",
+              pulseActive && "scale-105 text-emerald-500"
+            )}>
+              <Cloud className={cn(
+                "w-3.5 h-3.5 transition-colors duration-300",
+                pulseActive ? "text-emerald-500" : "text-emerald-500/80"
+              )} />
+              <span className="text-xs text-emerald-600 font-medium">数据已同步云端</span>
+            </div>
+          )}
+          {syncStatus === 'offline' && (
+            <div className={cn(
+              "flex items-center gap-1.5 transition-all duration-300",
+              pulseActive && "scale-[1.04] text-[var(--primary)]"
+            )}>
+              <CloudOff className={cn(
+                "w-3.5 h-3.5 transition-colors duration-300",
+                pulseActive ? "text-[var(--primary)]" : "text-slate-400"
+              )} />
+              <span className={cn(
+                "text-xs font-medium transition-colors duration-300",
+                pulseActive ? "text-[var(--primary)]" : "text-[var(--text-muted)]"
+              )}>本地草稿已自动保存</span>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* 右侧操作区 */}
       <div className="ml-auto flex items-center gap-1 relative">
@@ -444,230 +485,234 @@ export default function Toolbar() {
         </div>
 
         {/* 排版样式控制按钮与浮层 */}
-        <div className="relative">
-          <button
-            onClick={() => setIsStylePanelOpen(!isStylePanelOpen)}
-            className="flex items-center gap-1 px-1.5 py-1.5 text-xs font-semibold text-[var(--primary)] hover:text-[var(--primary-hover)] active:scale-95 bg-transparent border-0 cursor-pointer select-none rounded transition-all duration-150 focus:outline-none"
-          >
-            <Sliders size={13} />
-            排版样式
-          </button>
+        {authorized && (
+          <div className="relative">
+            <button
+              onClick={() => setIsStylePanelOpen(!isStylePanelOpen)}
+              className="flex items-center gap-1 px-1.5 py-1.5 text-xs font-semibold text-[var(--primary)] hover:text-[var(--primary-hover)] active:scale-95 bg-transparent border-0 cursor-pointer select-none rounded transition-all duration-150 focus:outline-none"
+            >
+              <Sliders size={13} />
+              排版样式
+            </button>
 
-          {isStylePanelOpen && (
-            <>
-              {/* 透明遮罩，用于点击外部关闭 */}
-              <div className="fixed inset-0 z-20 cursor-default" onClick={() => setIsStylePanelOpen(false)} />
-              
-              {/* 悬浮控制面板 (毛玻璃效果) */}
-              <div className="absolute right-0 top-10 bg-white/95 backdrop-blur-md p-4 rounded-xl border border-[var(--border)] shadow-2xl z-30 flex flex-col gap-4 animate-scale-up min-w-[260px]">
-                <h4 className="text-xs font-bold text-[var(--text-primary)] border-b border-slate-100 pb-1.5">排版样式设置</h4>
+            {isStylePanelOpen && (
+              <>
+                {/* 透明遮罩，用于点击外部关闭 */}
+                <div className="fixed inset-0 z-20 cursor-default" onClick={() => setIsStylePanelOpen(false)} />
                 
-                {/* 主题色 */}
-                <div className="space-y-1.5">
-                  <label className="text-[11px] font-bold text-[var(--text-secondary)]">主题颜色</label>
-                  <div className="grid grid-cols-9 gap-1.5 items-center">
-                    {THEME_COLORS.map((c) => (
-                      <button
-                        key={c.value}
-                        title={c.label}
-                        onClick={() => updateTheme({ primaryColor: c.value })}
-                        className="w-6 h-6 rounded-full border-2 transition-all hover:scale-110 active:scale-95 cursor-pointer flex items-center justify-center"
-                        style={{
-                          backgroundColor: c.value,
-                          borderColor: resume.theme.primaryColor === c.value ? c.value : 'transparent',
-                          boxShadow: resume.theme.primaryColor === c.value ? `0 0 0 2px white, 0 0 0 3px ${c.value}` : undefined,
-                        }}
-                      />
-                    ))}
-
-                    {/* 自定义颜色按钮 */}
-                    <div className="relative w-6 h-6 flex items-center justify-center">
-                      <button
-                        title="自定义颜色"
-                        onClick={() => colorInputRef.current?.click()}
-                        className="w-6 h-6 rounded-full border-2 transition-all hover:scale-110 active:scale-95 cursor-pointer flex items-center justify-center bg-gradient-to-tr from-indigo-500 via-purple-500 to-pink-500 text-white"
-                        style={{
-                          borderColor: isCustomColor ? (resume.theme.primaryColor || '#7C3AED') : 'transparent',
-                          boxShadow: isCustomColor ? `0 0 0 2px white, 0 0 0 3px ${resume.theme.primaryColor || '#7C3AED'}` : undefined,
-                        }}
-                      >
-                        <Plus size={12} className="stroke-[3]" />
-                      </button>
-                      <input
-                        ref={colorInputRef}
-                        type="color"
-                        value={resume.theme.primaryColor || '#7C3AED'}
-                        onChange={(e) => updateTheme({ primaryColor: e.target.value })}
-                        className="absolute inset-0 opacity-0 w-0 h-0 pointer-events-none"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                {/* 字体与字号 */}
-                <div className="grid grid-cols-2 gap-3 pt-1">
-                  <div className="flex flex-col gap-1">
-                    <label className="text-[11px] font-bold text-[var(--text-secondary)]">字体</label>
-                    <Select
-                      size="small"
-                      value={resume.theme.fontFamily}
-                      onChange={(val) => updateTheme({ fontFamily: val })}
-                      style={{ width: '100%' }}
-                    >
-                      <Select.Option value="Noto Serif SC">思源宋体</Select.Option>
-                      <Select.Option value="Noto Sans SC">思源黑体</Select.Option>
-                      <Select.Option value="Inter">Inter</Select.Option>
-                    </Select>
-                  </div>
-
-                  <div className="flex flex-col gap-1">
-                    <label className="text-[11px] font-bold text-[var(--text-secondary)]">基准字号</label>
-                    <Select
-                      size="small"
-                      value={resume.theme.fontSize}
-                      onChange={(val) => updateTheme({ fontSize: val })}
-                      style={{ width: '100%' }}
-                    >
-                      {[12, 13, 14, 15, 16].map((s) => (
-                        <Select.Option key={s} value={s}>{s}px</Select.Option>
+                {/* 悬浮控制面板 (毛玻璃效果) */}
+                <div className="absolute right-0 top-10 bg-white/95 backdrop-blur-md p-4 rounded-xl border border-[var(--border)] shadow-2xl z-30 flex flex-col gap-4 animate-scale-up min-w-[260px]">
+                  <h4 className="text-xs font-bold text-[var(--text-primary)] border-b border-slate-100 pb-1.5">排版样式设置</h4>
+                  
+                  {/* 主题色 */}
+                  <div className="space-y-1.5">
+                    <label className="text-[11px] font-bold text-[var(--text-secondary)]">主题颜色</label>
+                    <div className="grid grid-cols-9 gap-1.5 items-center">
+                      {THEME_COLORS.map((c) => (
+                        <button
+                          key={c.value}
+                          title={c.label}
+                          onClick={() => updateTheme({ primaryColor: c.value })}
+                          className="w-6 h-6 rounded-full border-2 transition-all hover:scale-110 active:scale-95 cursor-pointer flex items-center justify-center"
+                          style={{
+                            backgroundColor: c.value,
+                            borderColor: resume.theme.primaryColor === c.value ? c.value : 'transparent',
+                            boxShadow: resume.theme.primaryColor === c.value ? `0 0 0 2px white, 0 0 0 3px ${c.value}` : undefined,
+                          }}
+                        />
                       ))}
-                    </Select>
-                  </div>
-                </div>
 
-                {/* 标题装饰风格 */}
-                <div className="flex flex-col gap-1 mt-2">
-                  <label className="text-[11px] font-bold text-[var(--text-secondary)]">标题装饰风格</label>
-                  <Select
-                    size="small"
-                    value={resume.theme.dividerStyle || 'left-bar'}
-                    onChange={(val) => updateTheme({ dividerStyle: val })}
-                    style={{ width: '100%' }}
-                  >
-                    <Select.Option value="left-bar">✨ 高端竖条</Select.Option>
-                    <Select.Option value="skew-block">💎 斜角底色块</Select.Option>
-                    <Select.Option value="light-line">🍃 轻盈细线</Select.Option>
-                    <Select.Option value="watermark-bar">💠 通栏底色条</Select.Option>
-                    <Select.Option value="solid">经典横线</Select.Option>
-                    <Select.Option value="none">无装饰极简</Select.Option>
-                  </Select>
-                </div>
-                
-                {/* 线条粗细与背景开关 (并排展示) */}
-                <div className="grid grid-cols-2 gap-3 mt-1">
-                  <div className="flex flex-col gap-1">
-                    <label className="text-[11px] font-bold text-[var(--text-secondary)]">
-                      {isVerticalStyle ? '竖线宽度' : '横线粗细'}
-                    </label>
-                    <Select
-                      size="small"
-                      value={resume.theme.dividerHeight ?? 4}
-                      onChange={(val) => updateTheme({ dividerHeight: val })}
-                      style={{ width: '100%' }}
-                    >
-                      {[1, 2, 3, 4, 5, 6].map((w) => (
-                        <Select.Option key={w} value={w}>{w}px</Select.Option>
-                      ))}
-                    </Select>
-                  </div>
-                
-                  {style === 'left-bar' && (
-                    <div className="flex flex-col gap-1">
-                      <label className="text-[11px] font-bold text-[var(--text-secondary)]">标题底色</label>
-                      <div className="flex items-center h-8">
-                        <Switch
-                          checked={resume.theme.enableTitleBg}
-                          onChange={(val) => updateTheme({ enableTitleBg: val })}
+                      {/* 自定义颜色按钮 */}
+                      <div className="relative w-6 h-6 flex items-center justify-center">
+                        <button
+                          title="自定义颜色"
+                          onClick={() => colorInputRef.current?.click()}
+                          className="w-6 h-6 rounded-full border-2 transition-all hover:scale-110 active:scale-95 cursor-pointer flex items-center justify-center bg-gradient-to-tr from-indigo-500 via-purple-500 to-pink-500 text-white"
+                          style={{
+                            borderColor: isCustomColor ? (resume.theme.primaryColor || '#7C3AED') : 'transparent',
+                            boxShadow: isCustomColor ? `0 0 0 2px white, 0 0 0 3px ${resume.theme.primaryColor || '#7C3AED'}` : undefined,
+                          }}
+                        >
+                          <Plus size={12} className="stroke-[3]" />
+                        </button>
+                        <input
+                          ref={colorInputRef}
+                          type="color"
+                          value={resume.theme.primaryColor || '#7C3AED'}
+                          onChange={(e) => updateTheme({ primaryColor: e.target.value })}
+                          className="absolute inset-0 opacity-0 w-0 h-0 pointer-events-none"
                         />
                       </div>
                     </div>
-                  )}
-                </div>
-                
-                {/* 模块间距 & 行高倍数 */}
-                <div className="grid grid-cols-2 gap-3 mt-1">
-                  <div className="flex flex-col gap-1">
-                    <label className="text-[11px] font-bold text-[var(--text-secondary)]">模块间距</label>
-                    <Select
-                      size="small"
-                      value={resume.theme.sectionGap ?? 16}
-                      onChange={(val) => updateTheme({ sectionGap: val })}
-                      style={{ width: '100%' }}
-                    >
-                      {[8, 12, 16, 20, 24, 28].map((g) => (
-                        <Select.Option key={g} value={g}>{g}px</Select.Option>
-                      ))}
-                    </Select>
                   </div>
-                
-                  <div className="flex flex-col gap-1">
-                    <label className="text-[11px] font-bold text-[var(--text-secondary)]">文本行高</label>
-                    <Select
-                      size="small"
-                      value={resume.theme.lineHeight ?? 1.6}
-                      onChange={(val) => updateTheme({ lineHeight: val })}
-                      style={{ width: '100%' }}
-                    >
-                      {[1.4, 1.5, 1.6, 1.7, 1.8, 1.9, 2.0].map((lh) => (
-                        <Select.Option key={lh} value={lh}>{lh.toFixed(1)}倍</Select.Option>
-                      ))}
-                    </Select>
-                  </div>
-                </div>
-              </div>
-            </>
-          )}
-        </div>
 
-        {/* 登录状态 */}
-        {isLoggedIn ? (
-          <div className="flex items-center gap-1 bg-slate-50 border border-slate-100 rounded-lg py-1 px-1.5 mr-0.5">
-            <User size={13} className="text-[var(--text-secondary)]" />
-            <span className="text-xs text-[var(--text-secondary)] font-medium max-w-[80px] truncate">
-              {user}
-            </span>
-            <button
-              onClick={logout}
-              title="退出登录"
-              className="text-[var(--text-muted)] hover:text-red-500 active:scale-90 transition-all duration-150 cursor-pointer bg-transparent border-0 focus:outline-none"
-            >
-              <LogOut size={13} />
-            </button>
+                  {/* 字体与字号 */}
+                  <div className="grid grid-cols-2 gap-3 pt-1">
+                    <div className="flex flex-col gap-1">
+                      <label className="text-[11px] font-bold text-[var(--text-secondary)]">字体</label>
+                      <Select
+                        size="small"
+                        value={resume.theme.fontFamily}
+                        onChange={(val) => updateTheme({ fontFamily: val })}
+                        style={{ width: '100%' }}
+                      >
+                        <Select.Option value="Noto Serif SC">思源宋体</Select.Option>
+                        <Select.Option value="Noto Sans SC">思源黑体</Select.Option>
+                        <Select.Option value="Inter">Inter</Select.Option>
+                      </Select>
+                    </div>
+
+                    <div className="flex flex-col gap-1">
+                      <label className="text-[11px] font-bold text-[var(--text-secondary)]">基准字号</label>
+                      <Select
+                        size="small"
+                        value={resume.theme.fontSize}
+                        onChange={(val) => updateTheme({ fontSize: val })}
+                        style={{ width: '100%' }}
+                      >
+                        {[12, 13, 14, 15, 16].map((s) => (
+                          <Select.Option key={s} value={s}>{s}px</Select.Option>
+                        ))}
+                      </Select>
+                    </div>
+                  </div>
+
+                  {/* 标题装饰风格 */}
+                  <div className="flex flex-col gap-1 mt-2">
+                    <label className="text-[11px] font-bold text-[var(--text-secondary)]">标题装饰风格</label>
+                    <Select
+                      size="small"
+                      value={resume.theme.dividerStyle || 'left-bar'}
+                      onChange={(val) => updateTheme({ dividerStyle: val })}
+                      style={{ width: '100%' }}
+                    >
+                      <Select.Option value="left-bar">高端竖条</Select.Option>
+                      <Select.Option value="skew-block">斜角底色块</Select.Option>
+                      <Select.Option value="light-line">轻盈细线</Select.Option>
+                      <Select.Option value="watermark-bar">通栏底色条</Select.Option>
+                      <Select.Option value="solid">经典横线</Select.Option>
+                      <Select.Option value="none">无装饰极简</Select.Option>
+                    </Select>
+                  </div>
+                  
+                  {/* 线条粗细与背景开关 (并排展示) */}
+                  <div className="grid grid-cols-2 gap-3 mt-1">
+                    <div className="flex flex-col gap-1">
+                      <label className="text-[11px] font-bold text-[var(--text-secondary)]">
+                        {isVerticalStyle ? '竖线宽度' : '横线粗细'}
+                      </label>
+                      <Select
+                        size="small"
+                        value={resume.theme.dividerHeight ?? 4}
+                        onChange={(val) => updateTheme({ dividerHeight: val })}
+                        style={{ width: '100%' }}
+                      >
+                        {[1, 2, 3, 4, 5, 6].map((w) => (
+                          <Select.Option key={w} value={w}>{w}px</Select.Option>
+                        ))}
+                      </Select>
+                    </div>
+                  
+                    {style === 'left-bar' && (
+                      <div className="flex flex-col gap-1">
+                        <label className="text-[11px] font-bold text-[var(--text-secondary)]">标题底色</label>
+                        <div className="flex items-center h-8">
+                          <Switch
+                            checked={resume.theme.enableTitleBg}
+                            onChange={(val) => updateTheme({ enableTitleBg: val })}
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  
+                  {/* 模块间距 & 行高倍数 */}
+                  <div className="grid grid-cols-2 gap-3 mt-1">
+                    <div className="flex flex-col gap-1">
+                      <label className="text-[11px] font-bold text-[var(--text-secondary)]">模块间距</label>
+                      <Select
+                        size="small"
+                        value={resume.theme.sectionGap ?? 16}
+                        onChange={(val) => updateTheme({ sectionGap: val })}
+                        style={{ width: '100%' }}
+                      >
+                        {[8, 12, 16, 20, 24, 28].map((g) => (
+                          <Select.Option key={g} value={g}>{g}px</Select.Option>
+                        ))}
+                      </Select>
+                    </div>
+                  
+                    <div className="flex flex-col gap-1">
+                      <label className="text-[11px] font-bold text-[var(--text-secondary)]">文本行高</label>
+                      <Select
+                        size="small"
+                        value={resume.theme.lineHeight ?? 1.6}
+                        onChange={(val) => updateTheme({ lineHeight: val })}
+                        style={{ width: '100%' }}
+                      >
+                        {[1.4, 1.5, 1.6, 1.7, 1.8, 1.9, 2.0].map((lh) => (
+                          <Select.Option key={lh} value={lh}>{lh.toFixed(1)}倍</Select.Option>
+                        ))}
+                      </Select>
+                    </div>
+                  </div>
+                </div>
+              </>
+            )}
           </div>
-        ) : (
-          <button
-            onClick={() => setIsLoginModalOpen(true)}
-            className="flex items-center gap-1 px-1.5 py-1.5 text-xs font-semibold text-[var(--primary)] hover:text-[var(--primary-hover)] active:scale-95 bg-transparent border-0 cursor-pointer select-none rounded transition-all duration-150 focus:outline-none"
-          >
-            登录/云同步
-          </button>
         )}
 
-        <button
-          onClick={() => { if (confirm('确定重置所有内容？')) resetResume(); }}
-          className="flex items-center gap-1 px-1.5 py-1.5 text-xs font-semibold text-[var(--primary)] hover:text-[var(--primary-hover)] active:scale-95 bg-transparent border-0 cursor-pointer select-none rounded transition-all duration-150 focus:outline-none"
-        >
-          <RotateCcw size={14} />
-          重置
-        </button>
+        {/* 登录状态 */}
+        {authorized && (
+          isLoggedIn ? (
+            <div className="flex items-center gap-1 bg-slate-50 border border-slate-100 rounded-lg py-1 px-1.5 mr-0.5 animate-fade-in">
+              <User size={13} className="text-[var(--text-secondary)]" />
+              <span className="text-xs text-[var(--text-secondary)] font-medium max-w-[80px] truncate">
+                {user}
+              </span>
+              <button
+                onClick={logout}
+                title="退出登录"
+                className="text-[var(--text-muted)] hover:text-red-500 active:scale-90 transition-all duration-150 cursor-pointer bg-transparent border-0 focus:outline-none"
+              >
+                <LogOut size={13} />
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={() => setIsLoginModalOpen(true)}
+              className="flex items-center gap-1 px-1.5 py-1.5 text-xs font-semibold text-[var(--primary)] hover:text-[var(--primary-hover)] active:scale-95 bg-transparent border-0 cursor-pointer select-none rounded transition-all duration-150 focus:outline-none"
+            >
+              <Cloud size={13} />
+              云同步
+            </button>
+          )
+        )}
 
-        <button
-          onClick={handleDownloadImage}
-          disabled={exportingImage}
-          className="flex items-center gap-1 px-1.5 py-1.5 text-xs font-semibold text-[var(--primary)] hover:text-[var(--primary-hover)] active:scale-95 bg-transparent border-0 cursor-pointer select-none rounded transition-all duration-150 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {exportingImage ? <Loader2 size={14} className="animate-spin" /> : <ImageIcon size={14} />}
-          导出图片
-        </button>
+        <Dropdown trigger="click" droplist={exportMenu} position="bl">
+          <button className="flex items-center gap-1 px-1.5 py-1.5 text-xs font-semibold text-[var(--primary)] hover:text-[var(--primary-hover)] active:scale-95 bg-transparent border-0 cursor-pointer select-none rounded transition-all duration-150 focus:outline-none">
+            <Download size={13} />
+            导出
+          </button>
+        </Dropdown>
 
-        <button
-          onClick={handleDownloadPDF}
-          disabled={downloading}
-          className="flex items-center gap-1 px-1.5 py-1.5 text-xs font-semibold text-[var(--primary)] hover:text-[var(--primary-hover)] active:scale-95 bg-transparent border-0 cursor-pointer select-none rounded transition-all duration-150 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {downloading ? <Loader2 size={14} className="animate-spin" /> : <Download size={14} />}
-          下载 PDF
-        </button>
+        {!authorized ? (
+          <button
+            onClick={onStartEdit}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 active:scale-95 shadow-sm hover:shadow-md cursor-pointer select-none rounded-lg transition-all duration-150 animate-pulse border-0 focus:outline-none"
+          >
+            <Sparkles size={13} />
+            开始编辑
+          </button>
+        ) : (
+          <button
+            onClick={onLogout}
+            className="flex items-center justify-center p-1.5 text-red-600 hover:text-red-700 hover:bg-red-50/60 active:scale-90 bg-transparent border-0 cursor-pointer select-none rounded-lg transition-all duration-150 focus:outline-none"
+            title="锁定编辑并返回纯净预览"
+          >
+            <LogOut size={14} />
+          </button>
+        )}
       </div>
 
       <LoginModal isOpen={isLoginModalOpen} onClose={() => setIsLoginModalOpen(false)} />

@@ -9,6 +9,9 @@ const nextConfig = {
   basePath: isExport ? `/${repoName}` : '',
   assetPrefix: isExport ? `/${repoName}/` : '',
 
+  // 禁用字体优化以防在没有稳定外网连接时构建失败
+  optimizeFonts: false,
+
   // Puppeteer 只在 Node.js 环境运行，排除在 bundle 之外
   experimental: {
     serverComponentsExternalPackages: ['puppeteer'],

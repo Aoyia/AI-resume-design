@@ -6,9 +6,10 @@ import { Lock } from 'lucide-react';
 
 interface PasswordGateProps {
   onSuccess: () => void;
+  onClose?: () => void;
 }
 
-export default function PasswordGate({ onSuccess }: PasswordGateProps) {
+export default function PasswordGate({ onSuccess, onClose }: PasswordGateProps) {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -56,6 +57,15 @@ export default function PasswordGate({ onSuccess }: PasswordGateProps) {
           >
             校验密码并进入
           </Button>
+          {onClose && (
+            <Button
+              type="text"
+              onClick={onClose}
+              className="h-10 font-medium text-slate-500 hover:text-slate-700 hover:bg-slate-50 border-0"
+            >
+              返回纯净预览
+            </Button>
+          )}
         </div>
       </div>
     </div>
