@@ -139,6 +139,19 @@ function updateListItem<T extends { id: string }>(
   return list.map((item) => (item.id === id ? { ...item, ...patch } : item));
 }
 
+function getUniqueResumeName(existingNames: string[], baseName: string): string {
+  if (!existingNames.includes(baseName)) {
+    return baseName;
+  }
+  let counter = 1;
+  let uniqueName = `${baseName} (${counter})`;
+  while (existingNames.includes(uniqueName)) {
+    counter++;
+    uniqueName = `${baseName} (${counter})`;
+  }
+  return uniqueName;
+}
+
 function reorderList<T extends { id: string }>(list: T[], orderedIds: string[]): T[] {
   return orderedIds.map((id) => list.find((i) => i.id === id)!).filter(Boolean);
 }
@@ -682,10 +695,13 @@ export const useResumeStore = create<ResumeStore>()(
         set((s) => {
           const newId = uid();
           const cleanedData = cleanResumeData(data);
+          const baseName = cleanedData.resumeName || cleanedData.basicInfo?.name || '未命名';
+          const existingNames = s.resumes.map(r => r.resumeName || '');
+          const finalName = getUniqueResumeName(existingNames, baseName);
           const imported = {
             ...cleanedData,
             id: newId,
-            resumeName: `${cleanedData.resumeName || cleanedData.basicInfo.name || '未命名'} (导入)`
+            resumeName: finalName
           };
           return {
             resumes: [...s.resumes, imported],
@@ -695,14 +711,16 @@ export const useResumeStore = create<ResumeStore>()(
         }),
       importBackupPackage: (resumesList, override) =>
         set((s) => {
+          let existingNames = override ? [] : s.resumes.map(r => r.resumeName || '');
           const processed = resumesList.map(r => {
             const cleaned = cleanResumeData(r);
+            const baseName = cleaned.resumeName || cleaned.basicInfo?.name || '未命名';
+            const finalName = getUniqueResumeName(existingNames, baseName);
+            existingNames.push(finalName);
             return {
               ...cleaned,
               id: override ? cleaned.id : uid(),
-              resumeName: override 
-                ? (cleaned.resumeName || `${cleaned.basicInfo?.name || '未命名'}_简历`) 
-                : `${cleaned.resumeName || cleaned.basicInfo?.name || '未命名'} (导入)`
+              resumeName: finalName
             };
           });
 

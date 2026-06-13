@@ -7,7 +7,7 @@ import { useAuthStore } from '@/store/useAuthStore';
 import LoginModal from './LoginModal';
 import { cn } from '@/lib/utils';
 import { ResumeTheme } from '@/types/resume';
-import { Select, Switch, Dropdown, Menu, Input, Modal, Message, Popconfirm } from '@arco-design/web-react';
+import { Select, Switch, Dropdown, Menu, Input, Modal, Message, Popconfirm, Tooltip } from '@arco-design/web-react';
 
 const THEME_COLORS = [
   { label: '智慧紫', value: '#7C3AED' },
@@ -75,8 +75,8 @@ export default function Toolbar({ authorized, onStartEdit, onLogout }: ToolbarPr
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      const name = resume.resumeName || `${resume.basicInfo.name}_简历` || '我的简历';
-      a.download = `${name}_配置.json`;
+      const name = resume.resumeName || resume.basicInfo.name || '我的简历';
+      a.download = `${name}.json`;
       a.click();
       URL.revokeObjectURL(url);
     } catch (e) {
@@ -456,9 +456,11 @@ export default function Toolbar({ authorized, onStartEdit, onLogout }: ToolbarPr
                               onClick={() => !isCurrent && switchResume(r.id)}
                               className="flex-1 min-w-0 text-left cursor-pointer select-none py-1"
                             >
-                              <div className="text-xs font-bold text-slate-700 truncate leading-snug">
-                                {r.resumeName || `${r.basicInfo.name || '未命名'}_简历`}
-                              </div>
+                              <Tooltip content={r.resumeName || `${r.basicInfo.name || '未命名'}_简历`}>
+                                <div className="text-xs font-bold text-slate-700 truncate leading-snug">
+                                  {r.resumeName || `${r.basicInfo.name || '未命名'}_简历`}
+                                </div>
+                              </Tooltip>
                               <div className="text-[9px] text-slate-400 truncate mt-0.5 leading-none">
                                 {r.basicInfo.jobTitle || '暂无求职意向'}
                               </div>
