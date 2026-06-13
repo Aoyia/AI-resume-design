@@ -271,7 +271,7 @@ export function getFlatElements(data: ResumeData): React.ReactElement[] {
 
     if (key === 'education' && education.length > 0) {
       elements.push(
-        <SectionTitle key="edu-title" title="教育经历" theme={theme} marginTop={sectionMarginTop} />
+        <SectionTitle key="edu-title" title={data.customTitles?.education || "教育经历"} theme={theme} marginTop={sectionMarginTop} />
       );
       education.forEach((edu, idx) => {
         const itemGroup = `edu-${edu.id}`;
@@ -313,7 +313,7 @@ export function getFlatElements(data: ResumeData): React.ReactElement[] {
 
     if (key === 'workExperience' && workExperience.length > 0) {
       elements.push(
-        <SectionTitle key="work-title" title="工作经历" theme={theme} marginTop={sectionMarginTop} />
+        <SectionTitle key="work-title" title={data.customTitles?.workExperience || "工作经历"} theme={theme} marginTop={sectionMarginTop} />
       );
       workExperience.forEach((w, idx) => {
         const itemGroup = `work-${w.id}`;
@@ -356,7 +356,7 @@ export function getFlatElements(data: ResumeData): React.ReactElement[] {
 
     if (key === 'projects' && projects.length > 0) {
       elements.push(
-        <SectionTitle key="proj-title" title="项目经历" theme={theme} marginTop={sectionMarginTop} />
+        <SectionTitle key="proj-title" title={data.customTitles?.projects || "项目经历"} theme={theme} marginTop={sectionMarginTop} />
       );
       projects.forEach((p, idx) => {
         const itemGroup = `proj-${p.id}`;
@@ -399,7 +399,7 @@ export function getFlatElements(data: ResumeData): React.ReactElement[] {
 
     if (key === 'skills' && skills) {
       elements.push(
-        <SectionTitle key="skills-title" title="专业技能" theme={theme} marginTop={sectionMarginTop} />
+        <SectionTitle key="skills-title" title={data.customTitles?.skills || "专业技能"} theme={theme} marginTop={sectionMarginTop} />
       );
       if (typeof skills === 'string') {
         const blocks = splitMarkdownToBlocks(skills);
@@ -436,7 +436,7 @@ export function getFlatElements(data: ResumeData): React.ReactElement[] {
 
     if (key === 'selfEvaluation' && selfEvaluation) {
       elements.push(
-        <SectionTitle key="self-eval-title" title="自我评价" theme={theme} marginTop={sectionMarginTop} />
+        <SectionTitle key="self-eval-title" title={data.customTitles?.selfEvaluation || "自我评价"} theme={theme} marginTop={sectionMarginTop} />
       );
       const blocks = splitMarkdownToBlocks(selfEvaluation);
       blocks.forEach((block, idx) => {
@@ -478,7 +478,7 @@ export function getFlatElements(data: ResumeData): React.ReactElement[] {
 
     if (key === 'campusExperience' && campusExperience && campusExperience.length > 0) {
       elements.push(
-        <SectionTitle key="campus-title" title="校园经历" theme={theme} marginTop={sectionMarginTop} />
+        <SectionTitle key="campus-title" title={data.customTitles?.campusExperience || "校园经历"} theme={theme} marginTop={sectionMarginTop} />
       );
       campusExperience.forEach((c, idx) => {
         const itemGroup = `campus-${c.id}`;
@@ -521,7 +521,7 @@ export function getFlatElements(data: ResumeData): React.ReactElement[] {
 
     if (key === 'trainingExperience' && trainingExperience && trainingExperience.length > 0) {
       elements.push(
-        <SectionTitle key="train-title" title="培训经历" theme={theme} marginTop={sectionMarginTop} />
+        <SectionTitle key="train-title" title={data.customTitles?.trainingExperience || "培训经历"} theme={theme} marginTop={sectionMarginTop} />
       );
       trainingExperience.forEach((t, idx) => {
         const itemGroup = `train-${t.id}`;
@@ -564,7 +564,7 @@ export function getFlatElements(data: ResumeData): React.ReactElement[] {
 
     if (key === 'openSource' && openSource && openSource.length > 0) {
       elements.push(
-        <SectionTitle key="os-title" title="开源项目与作品" theme={theme} marginTop={sectionMarginTop} />
+        <SectionTitle key="os-title" title={data.customTitles?.openSource || "开源项目与作品"} theme={theme} marginTop={sectionMarginTop} />
       );
       openSource.forEach((os, idx) => {
         const itemGroup = `os-${os.id}`;
@@ -607,7 +607,7 @@ export function getFlatElements(data: ResumeData): React.ReactElement[] {
 
     if (key === 'honorAward' && honorAward && honorAward.length > 0) {
       elements.push(
-        <SectionTitle key="honor-title" title="荣誉奖项" theme={theme} marginTop={sectionMarginTop} />
+        <SectionTitle key="honor-title" title={data.customTitles?.honorAward || "荣誉奖项"} theme={theme} marginTop={sectionMarginTop} />
       );
       honorAward.forEach((item, idx) => {
         elements.push(
@@ -631,7 +631,7 @@ export function getFlatElements(data: ResumeData): React.ReactElement[] {
 
     if (key === 'certificate' && certificate && certificate.length > 0) {
       elements.push(
-        <SectionTitle key="cert-title" title="证书资质" theme={theme} marginTop={sectionMarginTop} />
+        <SectionTitle key="cert-title" title={data.customTitles?.certificate || "证书资质"} theme={theme} marginTop={sectionMarginTop} />
       );
       certificate.forEach((item, idx) => {
         elements.push(
@@ -652,7 +652,7 @@ export function getFlatElements(data: ResumeData): React.ReactElement[] {
 
     if (key === 'languageSkill' && languageSkill && languageSkill.length > 0) {
       elements.push(
-        <SectionTitle key="lang-title" title="语言能力" theme={theme} marginTop={sectionMarginTop} />
+        <SectionTitle key="lang-title" title={data.customTitles?.languageSkill || "语言能力"} theme={theme} marginTop={sectionMarginTop} />
       );
       languageSkill.forEach((item, idx) => {
         elements.push(
@@ -673,7 +673,7 @@ export function getFlatElements(data: ResumeData): React.ReactElement[] {
 
     if (key === 'competition' && competition && competition.length > 0) {
       elements.push(
-        <SectionTitle key="comp-title" title="竞赛经历" theme={theme} marginTop={sectionMarginTop} />
+        <SectionTitle key="comp-title" title={data.customTitles?.competition || "竞赛经历"} theme={theme} marginTop={sectionMarginTop} />
       );
       competition.forEach((item, idx) => {
         elements.push(
@@ -697,7 +697,7 @@ export function getFlatElements(data: ResumeData): React.ReactElement[] {
 
     if (key === 'researchPublication' && researchPublication && researchPublication.length > 0) {
       elements.push(
-        <SectionTitle key="pub-title" title="专利/著作/论文" theme={theme} marginTop={sectionMarginTop} />
+        <SectionTitle key="pub-title" title={data.customTitles?.researchPublication || "专利/著作/论文"} theme={theme} marginTop={sectionMarginTop} />
       );
       researchPublication.forEach((pub, idx) => {
         const itemGroup = `pub-${pub.id}`;

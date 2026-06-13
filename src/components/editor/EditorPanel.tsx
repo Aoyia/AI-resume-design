@@ -49,6 +49,8 @@ function SortableSection({ id }: { id: SectionKey }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
     useSortable({ id });
   const removeSectionFromOrder = useResumeStore((s) => s.removeSectionFromOrder);
+  const customTitles = useResumeStore((s) => s.resume.customTitles);
+  const updateSectionTitle = useResumeStore((s) => s.updateSectionTitle);
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -63,7 +65,8 @@ function SortableSection({ id }: { id: SectionKey }) {
     </span>
   );
 
-  const { title } = SECTION_CONFIG[id] ?? { title: id };
+  const defaultTitle = SECTION_CONFIG[id]?.title ?? id;
+  const title = customTitles?.[id] || defaultTitle;
 
   const renderContent = () => {
     switch (id) {
@@ -123,6 +126,7 @@ function SortableSection({ id }: { id: SectionKey }) {
         defaultOpen={id === 'basicInfo'}
         dragHandle={isFixed ? undefined : dragHandle}
         action={action}
+        onTitleChange={(newTitle) => updateSectionTitle(id, newTitle)}
       >
         {renderContent()}
       </Accordion>

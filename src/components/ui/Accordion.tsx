@@ -1,8 +1,8 @@
 'use client';
 
 import { cn } from '@/lib/utils';
-import { ChevronDown } from 'lucide-react';
-import { useState, ReactNode, useRef } from 'react';
+import { ChevronDown, Pencil } from 'lucide-react';
+import { useState, ReactNode, useRef, useEffect } from 'react';
 
 interface AccordionProps {
   title: string;
@@ -13,6 +13,8 @@ interface AccordionProps {
   action?: ReactNode;
   /** 是否显示拖拽手柄（由父级传入） */
   dragHandle?: ReactNode;
+  /** 标题修改回调 */
+  onTitleChange?: (newTitle: string) => void;
 }
 
 export default function Accordion({
@@ -22,16 +24,23 @@ export default function Accordion({
   children,
   action,
   dragHandle,
+  onTitleChange,
 }: AccordionProps) {
   const [open, setOpen] = useState(defaultOpen);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editingText, setEditingText] = useState(title);
   const contentRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    setEditingText(title);
+  }, [title]);
 
   return (
     <div className={cn('group border-b border-slate-100/80', className)}>
       {/* 标题栏 */}
       <div
         className="flex items-center gap-2 select-none cursor-pointer py-2.5 px-1"
-        onClick={() => setOpen((v) => !v)}
+        onClick={() => !isEditing && setOpen((v) => !v)}
       >
         {dragHandle && (
           <div
@@ -41,7 +50,49 @@ export default function Accordion({
             {dragHandle}
           </div>
         )}
-        <span className="flex-1 text-sm font-semibold text-[var(--text-primary)]">{title}</span>
+        {isEditing ? (
+          <input
+            type="text"
+            value={editingText}
+            onChange={(e) => setEditingText(e.target.value)}
+            onBlur={() => {
+              setIsEditing(false);
+              if (editingText.trim() && editingText !== title) {
+                onTitleChange?.(editingText.trim());
+              }
+            }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                setIsEditing(false);
+                if (editingText.trim() && editingText !== title) {
+                  onTitleChange?.(editingText.trim());
+                }
+              } else if (e.key === 'Escape') {
+                setIsEditing(false);
+                setEditingText(title);
+              }
+            }}
+            onClick={(e) => e.stopPropagation()}
+            autoFocus
+            className="flex-1 text-sm font-semibold text-[var(--text-primary)] border border-slate-200 rounded px-1.5 py-0.5 bg-white focus:outline-none focus:ring-1 focus:ring-[var(--primary)] focus:border-transparent min-w-[100px]"
+          />
+        ) : (
+          <span className="flex-1 text-sm font-semibold text-[var(--text-primary)] flex items-center gap-1.5 group/title">
+            {title}
+            {onTitleChange && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsEditing(true);
+                }}
+                className="opacity-0 group-hover/title:opacity-100 transition-opacity duration-150 p-0.5 hover:bg-slate-100 rounded text-slate-400 hover:text-slate-600 bg-transparent border-0 cursor-pointer focus:outline-none flex items-center shrink-0"
+                title="编辑模块名称"
+              >
+                <Pencil size={12} />
+              </button>
+            )}
+          </span>
+        )}
         {action && (
           <div onClick={(e) => e.stopPropagation()}>
             {action}

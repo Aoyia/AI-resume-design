@@ -121,6 +121,9 @@ interface ResumeStore {
 
   // 整份重置
   resetResume: () => void;
+
+  // 修改模块名称
+  updateSectionTitle: (key: SectionKey, title: string) => void;
 }
 
 // ─── 通用列表更新 helper ───────────────────────────────────
@@ -593,6 +596,18 @@ export const useResumeStore = create<ResumeStore>()(
 
       // 重置
       resetResume: () => set((s) => ({ resume: createEmptyResume(s.currentResumeId) })),
+
+      // 修改模块名称
+      updateSectionTitle: (key, title) =>
+        set((s) => ({
+          resume: {
+            ...s.resume,
+            customTitles: {
+              ...(s.resume.customTitles || {}),
+              [key]: title,
+            },
+          },
+        })),
 
       // 多简历管理
       resumes: [],

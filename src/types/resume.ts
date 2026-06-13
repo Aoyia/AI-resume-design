@@ -126,6 +126,7 @@ export interface ResumeData {
 
   /** 控制左侧面板大模块的显示顺序 */
   sectionOrder: SectionKey[];
+  customTitles?: Partial<Record<SectionKey, string>>;
 }
 
 export type SectionKey =
@@ -169,6 +170,7 @@ export const DEFAULT_SECTION_ORDER: SectionKey[] = [
 export const createEmptyResume = (id = 'yang-zhong-yuan-demo-id'): ResumeData => ({
   id,
   resumeName: '杨忠源_简历',
+  customTitles: {},
   theme: {
     ...DEFAULT_THEME,
     primaryColor: '#2563EB',
