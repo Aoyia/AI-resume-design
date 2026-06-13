@@ -18,10 +18,10 @@ export default function Modal({ isOpen, onClose, title, children, className }: M
       onCancel={onClose}
       footer={null}
       unmountOnExit
-      style={{ width: 400, borderRadius: 'var(--radius-lg)' }}
+      style={{ width: 340, borderRadius: 'var(--radius-md)' }}
       className={className}
     >
-      <div className="text-sm text-[var(--text-secondary)]">{children}</div>
+      <div className="text-xs text-[var(--text-secondary)]">{children}</div>
     </ArcoModal>
   );
 }
