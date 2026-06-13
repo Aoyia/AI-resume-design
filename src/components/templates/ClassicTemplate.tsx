@@ -29,11 +29,13 @@ function MdContent({ content }: { content: string }) {
 function SectionTitle({ 
   title, 
   theme, 
-  marginTop 
+  marginTop,
+  ...rest
 }: { 
   title: string; 
   theme: ResumeTheme; 
-  marginTop: number 
+  marginTop: number;
+  [key: string]: any;
 }) {
   const color = theme.primaryColor;
   const style = theme.dividerStyle || 'left-bar';
@@ -103,7 +105,7 @@ function SectionTitle({
 
   if (style === 'skew-block') {
     return (
-      <div data-type="section-title" style={getContainerStyle()}>
+      <div data-type="section-title" {...rest} style={getContainerStyle()}>
         <div
           style={{
             background: color,
@@ -129,7 +131,7 @@ function SectionTitle({
   }
 
   return (
-    <div data-type="section-title" style={getContainerStyle()}>
+    <div data-type="section-title" {...rest} style={getContainerStyle()}>
       <span 
         className="text-[0.9em] font-bold uppercase tracking-wider" 
         style={{ 
@@ -205,12 +207,25 @@ export function getFlatElements(data: ResumeData): React.ReactElement[] {
   const gap = theme.sectionGap;
 
   const elements: React.ReactElement[] = [];
+  let currentSectionKey: string = '';
+
+  const originalPush = elements.push.bind(elements);
+  elements.push = (...items: React.ReactElement[]) => {
+    const processedItems = items.map(item => {
+      if (React.isValidElement(item) && currentSectionKey) {
+        return React.cloneElement(item as React.ReactElement<any>, { 'data-section': currentSectionKey });
+      }
+      return item;
+    });
+    return originalPush(...processedItems);
+  };
 
   // 1. 头部：基本信息 (索引 0)
   elements.push(
     <div
       key="basic-info-header"
       data-type="basic-info"
+      data-section="basicInfo"
       data-cache-key={`basic-info|${b.name}|${b.jobTitle}|${b.phone}|${b.email}|${b.location}|${b.website}|${b.avatar}|${theme.fontSize}|${theme.lineHeight}|${theme.fontFamily}`}
       className="mb-2 flex justify-between items-start gap-6"
     >
@@ -245,6 +260,7 @@ export function getFlatElements(data: ResumeData): React.ReactElement[] {
   // 2. 根据模块排序依次放入扁平节点
   sectionOrder.forEach((key) => {
     if (key === 'basicInfo') return;
+    currentSectionKey = key;
 
     // 当前模块是否有内容
     let hasContent = false;
@@ -756,10 +772,25 @@ export const FONT_FALLBACKS: Record<string, string> = {
 export default function ClassicTemplate({ data, elementIndices, onStartEdit }: ClassicTemplateProps) {
   const flatElements = getFlatElements(data);
   const fontFamilyValue = FONT_FALLBACKS[data.theme.fontFamily] || data.theme.fontFamily;
+  const setActiveSection = useResumeStore((s) => s.setActiveSection);
 
   const renderedElements = elementIndices
     ? elementIndices.map((idx) => flatElements[idx] || null)
     : flatElements;
+
+  const handleDoubleClick = (e: React.MouseEvent) => {
+    if (onStartEdit) return;
+
+    const target = e.target as HTMLElement;
+    const sectionEl = target.closest('[data-section]');
+    if (sectionEl) {
+      const sectionKey = sectionEl.getAttribute('data-section');
+      if (sectionKey) {
+        setActiveSection(sectionKey as any);
+        window.getSelection()?.removeAllRanges();
+      }
+    }
+  };
 
   return (
     <div
@@ -769,6 +800,7 @@ export default function ClassicTemplate({ data, elementIndices, onStartEdit }: C
         fontSize: `${data.theme.fontSize}px`,
         lineHeight: data.theme.lineHeight,
       }}
+      onDoubleClick={handleDoubleClick}
     >
       {renderedElements.map((el, index) => {
         if (!el) return null;
