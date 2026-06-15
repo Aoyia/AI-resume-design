@@ -146,7 +146,7 @@ const Textarea = forwardRef<any, TextareaProps>(
             placeholder: props.placeholder,
             onBlur: handleBlur,
             ref: ref
-          }}
+          } as any}
         />
       </div>
     );
