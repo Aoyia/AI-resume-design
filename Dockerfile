@@ -1,6 +1,16 @@
-FROM node:18-slim
+FROM docker.m.daocloud.io/library/node:18-slim
 
 # 安装 Chromium 依赖以及文泉驿微米黑字体（支持中文 PDF 渲染）
+# 兼容 Debian 11 和 12，安全地使用阿里云镜像源加速 apt 安装
+RUN if [ -f /etc/apt/sources.list ]; then \
+        sed -i 's/deb.debian.org/mirrors.aliyun.com/g' /etc/apt/sources.list && \
+        sed -i 's/security.debian.org/mirrors.aliyun.com/g' /etc/apt/sources.list; \
+    fi && \
+    if [ -f /etc/apt/sources.list.d/debian.sources ]; then \
+        sed -i 's/deb.debian.org/mirrors.aliyun.com/g' /etc/apt/sources.list.d/debian.sources && \
+        sed -i 's/security.debian.org/mirrors.aliyun.com/g' /etc/apt/sources.list.d/debian.sources; \
+    fi
+
 RUN apt-get update && apt-get install -y \
     chromium \
     fonts-wqy-zenhei \
@@ -15,6 +25,8 @@ WORKDIR /app
 
 # 复制依赖定义并利用 Docker 缓存
 COPY package*.json ./
+# 使用淘宝 npm 镜像源加速依赖安装
+RUN npm config set registry https://registry.npmmirror.com
 RUN npm ci
 
 # 复制其余源码
