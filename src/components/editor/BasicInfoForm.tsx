@@ -2,7 +2,7 @@
 
 import { useState, useRef } from 'react';
 import { Upload, Trash2, Link as LinkIcon } from 'lucide-react';
-import { Message } from '@arco-design/web-react';
+import { Message, Switch } from '@arco-design/web-react';
 import Input from '@/components/ui/Input';
 import Textarea from '@/components/ui/Textarea';
 import { useResumeStore } from '@/store/useResumeStore';
@@ -197,15 +197,27 @@ export default function BasicInfoForm() {
         value={info.location ?? ''}
         onChange={(e) => updateBasicInfo({ location: e.target.value })}
         placeholder="北京"
-      />
-      <Textarea
-        label="个人网站"
-        value={info.website ?? ''}
-        onChange={(e) => updateBasicInfo({ website: e.target.value })}
-        placeholder="https://github.com/yourname"
         className="col-span-2"
-        rows={2}
       />
+      <div className="col-span-2 flex flex-col gap-1">
+        <div className="flex items-center justify-between">
+          <label className="text-xs font-medium text-[var(--text-secondary)]">个人网站</label>
+          <div className="flex items-center gap-1.5">
+            <span className="text-[10px] text-slate-400 select-none">独占一行</span>
+            <Switch
+              size="small"
+              checked={info.websiteFullRow ?? false}
+              onChange={(checked) => updateBasicInfo({ websiteFullRow: checked })}
+            />
+          </div>
+        </div>
+        <Textarea
+          value={info.website ?? ''}
+          onChange={(e) => updateBasicInfo({ website: e.target.value })}
+          placeholder="[我的 GitHub](https://github.com/yourname)"
+          rows={2}
+        />
+      </div>
     </div>
   );
 }

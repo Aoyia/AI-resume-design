@@ -25,6 +25,7 @@ export interface BasicInfo {
   email: string;
   location?: string;
   website?: string;
+  websiteFullRow?: boolean; // 个人网站是否独占一行
   github?: string;
   linkedin?: string;
   avatar?: string;        // base64 或 URL

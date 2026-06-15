@@ -239,10 +239,36 @@ export function getFlatElements(data: ResumeData): React.ReactElement[] {
           {b.phone    && <span>{b.phone}</span>}
           {b.email    && <span>{b.email}</span>}
           {b.location && <span>{b.location}</span>}
-          {b.website  && b.website.split('\n').map(x => x.trim()).filter(Boolean).map((site, idx) => (
-            <span key={idx}>{site}</span>
+          {!b.websiteFullRow && b.website && b.website.split('\n').map(x => x.trim()).filter(Boolean).map((site, idx) => (
+            <span key={idx} className="inline-flex">
+              <ReactMarkdown
+                components={{
+                  p: ({ children }) => <span className="break-all">{children}</span>,
+                  a: ({ href, children }) => <a href={href} target="_blank" rel="noopener noreferrer" className="hover:text-[var(--primary)] hover:underline transition-colors duration-150" style={{ color: 'inherit' }}>{children}</a>,
+                  strong: ({ children }) => <strong className="font-semibold text-gray-950">{children}</strong>
+                }}
+              >
+                {site}
+              </ReactMarkdown>
+            </span>
           ))}
         </div>
+        {b.websiteFullRow && b.website && (
+          <div className="text-[0.8em] text-gray-800 tracking-wide mt-0.5 break-all" style={{ whiteSpace: 'pre-line' }}>
+            <ReactMarkdown
+              components={{
+                p: ({ children }) => <p className="break-all mb-0.5 last:mb-0" style={{ lineHeight: 'inherit' }}>{children}</p>,
+                a: ({ href, children }) => <a href={href} target="_blank" rel="noopener noreferrer" className="hover:text-[var(--primary)] hover:underline transition-colors duration-150" style={{ color: 'inherit' }}>{children}</a>,
+                strong: ({ children }) => <strong className="font-semibold text-gray-950">{children}</strong>,
+                ul: ({ children }) => <ul className="list-disc pl-4 space-y-0.5 mt-0.5" style={{ lineHeight: 'inherit' }}>{children}</ul>,
+                ol: ({ children, start }) => <ol start={start} className="list-decimal pl-4 space-y-0.5 mt-0.5" style={{ lineHeight: 'inherit' }}>{children}</ol>,
+                li: ({ children }) => <li className="break-all" style={{ lineHeight: 'inherit' }}>{children}</li>,
+              }}
+            >
+              {b.website}
+            </ReactMarkdown>
+          </div>
+        )}
       </div>
       {b.avatar && (
         <div className="shrink-0">

@@ -11,7 +11,16 @@ const MAX_WIDTH = 600;
 const DEFAULT_WIDTH = 380;
 
 export default function EditorPage() {
-  const [editorWidth, setEditorWidth] = useState(DEFAULT_WIDTH);
+  const [editorWidth, setEditorWidth] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('editor_width');
+      if (saved) {
+        const parsed = parseInt(saved, 10);
+        if (!isNaN(parsed)) return Math.min(MAX_WIDTH, Math.max(MIN_WIDTH, parsed));
+      }
+    }
+    return DEFAULT_WIDTH;
+  });
   const [authorized, setAuthorized] = useState(false);
   const [checking, setChecking] = useState(true);
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
@@ -19,6 +28,7 @@ export default function EditorPage() {
   const startX = useRef(0);
   const startWidth = useRef(DEFAULT_WIDTH);
   const resizerRef = useRef<HTMLDivElement>(null);
+  const asideRef = useRef<HTMLElement>(null);
 
   // 挂载时检查本地 LocalStorage 授权情况
   useEffect(() => {
@@ -36,6 +46,9 @@ export default function EditorPage() {
     startWidth.current = editorWidth;
     document.body.style.cursor = 'col-resize';
     document.body.style.userSelect = 'none';
+    if (asideRef.current) {
+      asideRef.current.style.transition = 'none';
+    }
     e.preventDefault();
   }, [editorWidth]);
 
@@ -44,14 +57,25 @@ export default function EditorPage() {
       if (!isDragging.current) return;
       const delta = e.clientX - startX.current;
       const newWidth = Math.min(MAX_WIDTH, Math.max(MIN_WIDTH, startWidth.current + delta));
-      setEditorWidth(newWidth);
+      if (asideRef.current) {
+        asideRef.current.style.width = `${newWidth}px`;
+      }
     };
 
-    const onMouseUp = () => {
+    const onMouseUp = (e: MouseEvent) => {
       if (!isDragging.current) return;
       isDragging.current = false;
       document.body.style.cursor = '';
       document.body.style.userSelect = '';
+      
+      if (asideRef.current) {
+        asideRef.current.style.transition = 'width 0.25s ease-out, opacity 0.2s ease-out, visibility 0.25s';
+      }
+
+      const finalDelta = e.clientX - startX.current;
+      const finalWidth = Math.min(MAX_WIDTH, Math.max(MIN_WIDTH, startWidth.current + finalDelta));
+      setEditorWidth(finalWidth);
+      localStorage.setItem('editor_width', String(finalWidth));
     };
 
     window.addEventListener('mousemove', onMouseMove);
@@ -83,6 +107,7 @@ export default function EditorPage() {
       <div className="flex flex-1 overflow-hidden">
         {/* 左侧编辑面板 */}
         <aside
+          ref={asideRef}
           style={{ 
             width: authorized && !checking ? editorWidth : 0,
             opacity: authorized && !checking ? 1 : 0,
