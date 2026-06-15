@@ -117,7 +117,7 @@ function SectionTitle({
           }}
         >
           <span 
-            className="text-[0.9em] font-bold uppercase tracking-wider" 
+            className="text-[0.9em] font-bold tracking-wider" 
             style={{ 
               color: '#FFFFFF',
               display: 'inline-block',
@@ -134,7 +134,7 @@ function SectionTitle({
   return (
     <div data-type="section-title" {...rest} style={getContainerStyle()}>
       <span 
-        className="text-[0.9em] font-bold uppercase tracking-wider" 
+        className="text-[0.9em] font-bold tracking-wider" 
         style={{ 
           color,
           paddingLeft: (style === 'left-bar' && useBg) ? '2px' : '0px'
@@ -239,7 +239,9 @@ export function getFlatElements(data: ResumeData): React.ReactElement[] {
           {b.phone    && <span>{b.phone}</span>}
           {b.email    && <span>{b.email}</span>}
           {b.location && <span>{b.location}</span>}
-          {b.website  && <span>{b.website}</span>}
+          {b.website  && b.website.split('\n').map(x => x.trim()).filter(Boolean).map((site, idx) => (
+            <span key={idx}>{site}</span>
+          ))}
         </div>
       </div>
       {b.avatar && (
@@ -292,7 +294,8 @@ export function getFlatElements(data: ResumeData): React.ReactElement[] {
       );
       education.forEach((edu, idx) => {
         const itemGroup = `edu-${edu.id}`;
-        const headerMarginTop = idx === 0 ? '0px' : `${gap * 0.6}px`;
+        const headerMarginTop = idx === 0 ? '0px' : `${gap * 1.2}px`;
+        const borderStyle = idx === 0 ? {} : { borderTop: '1px dashed #E5E7EB', paddingTop: `${gap * 0.6}px` };
         elements.push(
           <div
             key={`edu-header-${edu.id}`}
@@ -300,7 +303,10 @@ export function getFlatElements(data: ResumeData): React.ReactElement[] {
             data-group={itemGroup}
             data-cache-key={`edu-header|${edu.id}|${edu.school}|${edu.major}|${edu.degree}|${edu.startDate}|${edu.endDate}|${theme.fontSize}|${theme.lineHeight}|${theme.fontFamily}|${gap}|${idx === 0}`}
             className="resume-item"
-            style={{ marginTop: headerMarginTop }}
+            style={{ 
+              marginTop: headerMarginTop,
+              ...borderStyle
+            }}
           >
             <div className="flex items-baseline justify-between tracking-wide">
               <span className="font-semibold text-[0.88em]" style={{ whiteSpace: 'pre-wrap' }}>{edu.school}</span>
@@ -334,7 +340,8 @@ export function getFlatElements(data: ResumeData): React.ReactElement[] {
       );
       workExperience.forEach((w, idx) => {
         const itemGroup = `work-${w.id}`;
-        const headerMarginTop = idx === 0 ? '0px' : `${gap * 0.6}px`;
+        const headerMarginTop = idx === 0 ? '0px' : `${gap * 1.2}px`;
+        const borderStyle = idx === 0 ? {} : { borderTop: '1px dashed #E5E7EB', paddingTop: `${gap * 0.6}px` };
         elements.push(
           <div
             key={`work-header-${w.id}`}
@@ -342,7 +349,10 @@ export function getFlatElements(data: ResumeData): React.ReactElement[] {
             data-group={itemGroup}
             data-cache-key={`work-header|${w.id}|${w.company}|${w.position}|${w.startDate}|${w.endDate}|${theme.fontSize}|${theme.lineHeight}|${theme.fontFamily}|${gap}|${idx === 0}`}
             className="resume-item"
-            style={{ marginTop: headerMarginTop }}
+            style={{ 
+              marginTop: headerMarginTop,
+              ...borderStyle
+            }}
           >
             <div className="flex items-baseline justify-between tracking-wide">
               <span className="font-semibold text-[0.88em]" style={{ whiteSpace: 'pre-wrap' }}>
@@ -377,7 +387,8 @@ export function getFlatElements(data: ResumeData): React.ReactElement[] {
       );
       projects.forEach((p, idx) => {
         const itemGroup = `proj-${p.id}`;
-        const headerMarginTop = idx === 0 ? '0px' : `${gap * 0.6}px`;
+        const headerMarginTop = idx === 0 ? '0px' : `${gap * 1.2}px`;
+        const borderStyle = idx === 0 ? {} : { borderTop: '1px dashed #E5E7EB', paddingTop: `${gap * 0.6}px` };
         elements.push(
           <div
             key={`proj-header-${p.id}`}
@@ -385,7 +396,10 @@ export function getFlatElements(data: ResumeData): React.ReactElement[] {
             data-group={itemGroup}
             data-cache-key={`proj-header|${p.id}|${p.company}|${p.position}|${p.startDate}|${p.endDate}|${theme.fontSize}|${theme.lineHeight}|${theme.fontFamily}|${gap}|${idx === 0}`}
             className="resume-item"
-            style={{ marginTop: headerMarginTop }}
+            style={{ 
+              marginTop: headerMarginTop,
+              ...borderStyle
+            }}
           >
             <div className="flex items-baseline justify-between tracking-wide">
               <span className="font-semibold text-[0.88em]" style={{ whiteSpace: 'pre-wrap' }}>
@@ -499,7 +513,8 @@ export function getFlatElements(data: ResumeData): React.ReactElement[] {
       );
       campusExperience.forEach((c, idx) => {
         const itemGroup = `campus-${c.id}`;
-        const headerMarginTop = idx === 0 ? '0px' : `${gap * 0.6}px`;
+        const headerMarginTop = idx === 0 ? '0px' : `${gap * 1.2}px`;
+        const borderStyle = idx === 0 ? {} : { borderTop: '1px dashed #E5E7EB', paddingTop: `${gap * 0.6}px` };
         elements.push(
           <div
             key={`campus-header-${c.id}`}
@@ -507,7 +522,10 @@ export function getFlatElements(data: ResumeData): React.ReactElement[] {
             data-group={itemGroup}
             data-cache-key={`campus-header|${c.id}|${c.company}|${c.position}|${c.startDate}|${c.endDate}|${theme.fontSize}|${theme.lineHeight}|${theme.fontFamily}|${gap}|${idx === 0}`}
             className="resume-item"
-            style={{ marginTop: headerMarginTop }}
+            style={{ 
+              marginTop: headerMarginTop,
+              ...borderStyle
+            }}
           >
             <div className="flex items-baseline justify-between tracking-wide">
               <span className="font-semibold text-[0.88em]" style={{ whiteSpace: 'pre-wrap' }}>
@@ -542,7 +560,8 @@ export function getFlatElements(data: ResumeData): React.ReactElement[] {
       );
       trainingExperience.forEach((t, idx) => {
         const itemGroup = `train-${t.id}`;
-        const headerMarginTop = idx === 0 ? '0px' : `${gap * 0.6}px`;
+        const headerMarginTop = idx === 0 ? '0px' : `${gap * 1.2}px`;
+        const borderStyle = idx === 0 ? {} : { borderTop: '1px dashed #E5E7EB', paddingTop: `${gap * 0.6}px` };
         elements.push(
           <div
             key={`train-header-${t.id}`}
@@ -550,7 +569,10 @@ export function getFlatElements(data: ResumeData): React.ReactElement[] {
             data-group={itemGroup}
             data-cache-key={`train-header|${t.id}|${t.company}|${t.position}|${t.startDate}|${t.endDate}|${theme.fontSize}|${theme.lineHeight}|${theme.fontFamily}|${gap}|${idx === 0}`}
             className="resume-item"
-            style={{ marginTop: headerMarginTop }}
+            style={{ 
+              marginTop: headerMarginTop,
+              ...borderStyle
+            }}
           >
             <div className="flex items-baseline justify-between tracking-wide">
               <span className="font-semibold text-[0.88em]" style={{ whiteSpace: 'pre-wrap' }}>
@@ -585,7 +607,8 @@ export function getFlatElements(data: ResumeData): React.ReactElement[] {
       );
       openSource.forEach((os, idx) => {
         const itemGroup = `os-${os.id}`;
-        const headerMarginTop = idx === 0 ? '0px' : `${gap * 0.6}px`;
+        const headerMarginTop = idx === 0 ? '0px' : `${gap * 1.2}px`;
+        const borderStyle = idx === 0 ? {} : { borderTop: '1px dashed #E5E7EB', paddingTop: `${gap * 0.6}px` };
         elements.push(
           <div
             key={`os-header-${os.id}`}
@@ -593,7 +616,10 @@ export function getFlatElements(data: ResumeData): React.ReactElement[] {
             data-group={itemGroup}
             data-cache-key={`os-header|${os.id}|${os.company}|${os.position}|${os.startDate}|${os.endDate}|${theme.fontSize}|${theme.lineHeight}|${theme.fontFamily}|${gap}|${idx === 0}`}
             className="resume-item"
-            style={{ marginTop: headerMarginTop }}
+            style={{ 
+              marginTop: headerMarginTop,
+              ...borderStyle
+            }}
           >
             <div className="flex items-baseline justify-between tracking-wide">
               <span className="font-semibold text-[0.88em]" style={{ whiteSpace: 'pre-wrap' }}>
@@ -718,7 +744,8 @@ export function getFlatElements(data: ResumeData): React.ReactElement[] {
       );
       researchPublication.forEach((pub, idx) => {
         const itemGroup = `pub-${pub.id}`;
-        const headerMarginTop = idx === 0 ? '0px' : `${gap * 0.6}px`;
+        const headerMarginTop = idx === 0 ? '0px' : `${gap * 1.2}px`;
+        const borderStyle = idx === 0 ? {} : { borderTop: '1px dashed #E5E7EB', paddingTop: `${gap * 0.6}px` };
         elements.push(
           <div
             key={`pub-header-${pub.id}`}
@@ -726,7 +753,10 @@ export function getFlatElements(data: ResumeData): React.ReactElement[] {
             data-group={itemGroup}
             data-cache-key={`pub-header|${pub.id}|${pub.name}|${pub.date}|${theme.fontSize}|${theme.lineHeight}|${theme.fontFamily}|${gap}|${idx === 0}`}
             className="resume-item"
-            style={{ marginTop: headerMarginTop }}
+            style={{ 
+              marginTop: headerMarginTop,
+              ...borderStyle
+            }}
           >
             <div className="flex items-baseline justify-between tracking-wide">
               <span className="font-semibold text-[0.88em]" style={{ whiteSpace: 'pre-wrap' }}>{pub.name}</span>

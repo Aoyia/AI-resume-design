@@ -309,7 +309,7 @@ export default function PreviewPanel({ authorized, onStartEdit }: PreviewPanelPr
                   <div className="absolute right-6 bottom-4 text-[10px] text-[var(--text-muted)] select-none">
                     第 {pageIdx + 1} 页 / 共 {pagesCount} 页
                   </div>
-                  <ClassicTemplate data={debouncedResume} elementIndices={indices} onStartEdit={!authorized ? onStartEdit : undefined} />
+                  <ClassicTemplate data={debouncedResume} elementIndices={indices} />
                 </div>
               </AnimateEntrance>
             ))}

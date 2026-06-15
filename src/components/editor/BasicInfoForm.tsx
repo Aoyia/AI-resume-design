@@ -4,6 +4,7 @@ import { useState, useRef } from 'react';
 import { Upload, Trash2, Link as LinkIcon } from 'lucide-react';
 import { Message } from '@arco-design/web-react';
 import Input from '@/components/ui/Input';
+import Textarea from '@/components/ui/Textarea';
 import { useResumeStore } from '@/store/useResumeStore';
 
 export default function BasicInfoForm() {
@@ -197,11 +198,13 @@ export default function BasicInfoForm() {
         onChange={(e) => updateBasicInfo({ location: e.target.value })}
         placeholder="北京"
       />
-      <Input
+      <Textarea
         label="个人网站"
         value={info.website ?? ''}
         onChange={(e) => updateBasicInfo({ website: e.target.value })}
         placeholder="https://github.com/yourname"
+        className="col-span-2"
+        rows={2}
       />
     </div>
   );
