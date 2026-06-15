@@ -1,0 +1,10 @@
+node_modules
+.next
+out
+.git
+.gitignore
+*.tar.gz
+*.zip
+scratch
+.agents
+.superpowers
