@@ -16,6 +16,7 @@ jobs:
       - name: Tar Source Code
         run: |
           tar -czf resume.tar.gz \
+            --exclude='resume.tar.gz' \
             --exclude='node_modules' \
             --exclude='.next' \
             --exclude='out' \
