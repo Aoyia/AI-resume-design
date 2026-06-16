@@ -66,3 +66,69 @@ jobs:
             echo '=== [5] 重载 Nginx 配置 ==='
             nginx -t && systemctl reload nginx || systemctl restart nginx
             echo '=== 部署完成！ ==='
+
+      - name: Notify Lark on Success
+        if: success()
+        run: |
+          jq -n \
+            --arg msg "${{ github.event.head_commit.message }}" \
+            --arg actor "${{ github.actor }}" \
+            --arg host "${{ secrets.ALIYUN_HOST }}" \
+            '{
+              msg_type: "interactive",
+              card: {
+                config: { wide_screen_mode: true },
+                header: {
+                  title: { tag: "plain_text", content: "🚀 AI 简历设计 - 部署成功" },
+                  template: "green"
+                },
+                elements: [
+                  {
+                    tag: "div",
+                    text: {
+                      tag: "lark_md",
+                      content: ("**构建状态**: ✅ Success\n**部署分支**: `master`\n**最新提交**: " + $msg + "\n**提交作者**: " + $actor + "\n**部署主机**: `" + $host + "`")
+                    }
+                  },
+                  { tag: "hr" },
+                  {
+                    tag: "note",
+                    elements: [{ tag: "plain_text", content: "服务已成功启动，且 Nginx 已平滑重载配置。" }]
+                  }
+                ]
+              }
+            }' > lark_success.json
+          curl -X POST "${{ secrets.LARK_WEBHOOK_URL }}" -H "Content-Type: application/json" -d @lark_success.json
+
+      - name: Notify Lark on Failure
+        if: failure()
+        run: |
+          jq -n \
+            --arg msg "${{ github.event.head_commit.message }}" \
+            --arg actor "${{ github.actor }}" \
+            --arg host "${{ secrets.ALIYUN_HOST }}" \
+            '{
+              msg_type: "interactive",
+              card: {
+                config: { wide_screen_mode: true },
+                header: {
+                  title: { tag: "plain_text", content: "❌ AI 简历设计 - 部署失败" },
+                  template: "red"
+                },
+                elements: [
+                  {
+                    tag: "div",
+                    text: {
+                      tag: "lark_md",
+                      content: ("**构建状态**: 🔴 Failed\n**部署分支**: `master`\n**最新提交**: " + $msg + "\n**触发作者**: " + $actor + "\n**部署主机**: `" + $host + "`")
+                    }
+                  },
+                  { tag: "hr" },
+                  {
+                    tag: "note",
+                    elements: [{ tag: "plain_text", content: "流水线执行中途出错，请前往 GitHub Actions 查看错误日志。" }]
+                  }
+                ]
+              }
+            }' > lark_failure.json
+          curl -X POST "${{ secrets.LARK_WEBHOOK_URL }}" -H "Content-Type: application/json" -d @lark_failure.json
