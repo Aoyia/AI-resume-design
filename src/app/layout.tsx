@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { Inter, Noto_Sans_SC, Noto_Serif_SC } from 'next/font/google';
 import './globals.css';
 import '@arco-design/web-react/dist/css/arco.css';
+import SyncServerConnector from '@/components/shared/SyncServerConnector';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -31,7 +32,10 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="zh-CN" className={`${inter.variable} ${notoTabs.variable} ${notoSerif.variable}`}>
-      <body>{children}</body>
+      <body>
+        {children}
+        <SyncServerConnector />
+      </body>
     </html>
   );
 }
