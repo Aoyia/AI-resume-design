@@ -15,8 +15,7 @@ jobs:
 
       - name: Tar Source Code
         run: |
-          tar -czf resume.tar.gz \
-            --exclude='resume.tar.gz' \
+          tar -czf ../resume.tar.gz \
             --exclude='node_modules' \
             --exclude='.next' \
             --exclude='out' \
@@ -25,6 +24,7 @@ jobs:
             --exclude='deploy.log' \
             --exclude='scratch' \
             .
+          mv ../resume.tar.gz .
 
       - name: Upload Tarball to Aliyun ECS
         uses: appleboy/scp-action@master
