@@ -32,6 +32,7 @@ interface ResumeStore {
   deleteResume: (id: string) => void;
   renameResume: (id: string, name: string) => void;
   importSingleResume: (data: ResumeData) => void;
+  overwriteActiveResume: (data: ResumeData) => void;
   importBackupPackage: (resumes: ResumeData[], override: boolean) => void;
 
   // 主题
@@ -707,6 +708,18 @@ export const useResumeStore = create<ResumeStore>()(
             resumes: [...s.resumes, imported],
             currentResumeId: newId,
             resume: imported,
+          };
+        }),
+      overwriteActiveResume: (data) =>
+        set((s) => {
+          const cleanedData = cleanResumeData(data);
+          const updated = {
+            ...cleanedData,
+            id: s.currentResumeId,
+            resumeName: s.resume.resumeName,
+          };
+          return {
+            resume: updated,
           };
         }),
       importBackupPackage: (resumesList, override) =>

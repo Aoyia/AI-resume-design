@@ -79,7 +79,7 @@ export default function SyncServerConnector() {
             }
 
             lastSyncedDataRef.current = receivedDataStr;
-            useResumeStore.getState().importSingleResume(payload.data);
+            useResumeStore.getState().overwriteActiveResume(payload.data);
 
             const updatedResume = useResumeStore.getState().resume;
             if (updatedResume) {
