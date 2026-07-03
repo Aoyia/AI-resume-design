@@ -1,6 +1,11 @@
 # AI 简历设计工具 / AI-resume-design
 
-> 🌐 **在线访问**：https://aoyia.github.io/AI-resume-design
+> 🌐 **在线访问**
+>
+> | 环境 | 地址 |
+> |------|------|
+> | 🚀 阿里云（完整功能，含 PDF 导出） | http://47.114.117.233:8080 |
+> | 📄 GitHub Pages（静态预览版） | https://aoyia.github.io/AI-resume-design |
 
 一款基于 Next.js 14 开发的 **AI 友好型、真 A4 纸张排版级** 简历设计与编辑工具。
 
