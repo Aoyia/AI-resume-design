@@ -23,12 +23,7 @@ function readResumeData() {
       return null;
     }
     const data = fs.readFileSync(FILE_PATH, 'utf-8');
-    const parsed = JSON.parse(data);
-    
-    // 获取文件的最后物理修改时间戳
-    const stats = fs.statSync(FILE_PATH);
-    parsed.updatedAt = Math.max(parsed.updatedAt || 0, Math.floor(stats.mtimeMs));
-    return parsed;
+    return JSON.parse(data);
   } catch (error) {
     console.error('[Sync Server] Error reading resume file:', error.message);
     return null;
@@ -96,11 +91,6 @@ const watcher = fs.watch(FILE_PATH, (eventType, filename) => {
         console.log('[Sync Server] File changed on disk, broadcasting...');
         lastFileContent = currentContent;
         const data = JSON.parse(currentContent);
-        
-        // 获取更新后的 mtimeMs 并广播给客户端
-        const stats = fs.statSync(FILE_PATH);
-        data.updatedAt = Math.max(data.updatedAt || 0, Math.floor(stats.mtimeMs));
-        
         broadcast(data);
       } else {
         console.log('[Sync Server] File watch triggered but content is unchanged');
@@ -136,7 +126,7 @@ wss.on('connection', (ws) => {
     try {
       const parsed = JSON.parse(message);
       if (parsed.type === 'client_changed') {
-        console.log('[Sync Server] Received client_changed message');
+        console.log('[Sync Server Trace] Received client_changed. client updatedAt:', parsed.data.updatedAt);
         
         // 启用/重置写锁，清除之前的解锁延时
         isWriting = true;
@@ -151,7 +141,9 @@ wss.on('connection', (ws) => {
         
         // 更新缓存以防 watch 比较失效
         lastFileContent = newContent;
-        console.log('[Sync Server] Successfully wrote client_changed data to disk');
+        
+        const stats = fs.statSync(FILE_PATH);
+        console.log('[Sync Server Trace] Successfully wrote client_changed data to disk. File mtimeMs:', Math.floor(stats.mtimeMs));
         
         // 广播给其他客户端，排除当前客户端
         broadcast(parsed.data, ws);
