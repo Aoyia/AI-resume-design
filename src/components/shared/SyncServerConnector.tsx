@@ -235,7 +235,7 @@ function isSameResumeContent(a: any, b: any): boolean {
 
   // 3. 普通对象类型校验
   if (typeof a === 'object') {
-    // 过滤掉值为 undefined 的属性，保证本地渲染状态字段与服务端反序列化后的纯 JSON 键值对能精准对齐
+    // 过滤掉值为 undefined 的属性，且过滤掉 'updatedAt' 时间戳，保证纯内容比对能够对齐
     const getValidKeys = (obj: any) => 
       Object.keys(obj).filter(
         (k) => k !== 'id' && k !== 'resumeName' && k !== 'updatedAt' && obj[k] !== undefined

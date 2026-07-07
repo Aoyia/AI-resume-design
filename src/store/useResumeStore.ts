@@ -240,8 +240,9 @@ const syncResumesMiddleware = <T extends ResumeStore>(
               newResumes.push(updatedResume);
             }
           }
+          const { _isSyncFromServer, ...cleanNextState } = nextState as any;
           return {
-            ...nextState,
+            ...cleanNextState,
             resume: updatedResume,
             resumes: newResumes,
             currentResumeId: currentId,

@@ -11,8 +11,10 @@ const syncResumesMiddlewareMock = (set) => {
       if (!nextState._isSyncFromServer) {
         updatedResume.updatedAt = 99999; // 模拟 Date.now() 更新为最新
       }
+      // 剔除标记
+      const { _isSyncFromServer, ...cleanNextState } = nextState;
       return {
-        ...nextState,
+        ...cleanNextState,
         resume: updatedResume,
       };
     }
@@ -29,13 +31,14 @@ function testClientActionUpdatesTimestamp() {
   console.log('✓ testClientActionUpdatesTimestamp passed');
 }
 
-// 测试用例 2: 服务端同步覆盖动作修改时，带有 _isSyncFromServer，应该保留传入的时间戳，不篡改
+// 测试用例 2: 服务端同步覆盖动作修改时，带有 _isSyncFromServer，应该保留传入的时间戳，且 _isSyncFromServer 被剔除
 function testServerSyncRetainsTimestamp() {
   const actionResult = syncResumesMiddlewareMock((partial) => partial)({
     resume: { id: 'test-1', basicInfo: { name: '李四' }, updatedAt: 12345 },
     _isSyncFromServer: true
   });
   assert.strictEqual(actionResult.resume.updatedAt, 12345);
+  assert.strictEqual(actionResult._isSyncFromServer, undefined);
   console.log('✓ testServerSyncRetainsTimestamp passed');
 }
 
