@@ -1,6 +1,6 @@
 'use client';
 
-import { Download, RotateCcw, Cloud, CloudOff, LogOut, User, Sliders, Image as ImageIcon, Loader2, Layers, Plus, Trash2, Edit3, FileUp, FileDown, Database, Check, Sparkles, X } from 'lucide-react';
+import { Download, RotateCcw, Cloud, CloudOff, LogOut, User, Sliders, Image as ImageIcon, Loader2, Layers, Plus, Trash2, Edit3, FileUp, FileDown, Database, Check, Sparkles, X, Github } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import { useResumeStore } from '@/store/useResumeStore';
 import { useAuthStore } from '@/store/useAuthStore';
@@ -760,6 +760,16 @@ export default function Toolbar({ authorized, onStartEdit, onLogout }: ToolbarPr
             导出
           </button>
         </Dropdown>
+
+        <a
+          href="https://github.com/Aoyia/AI-resume-design"
+          target="_blank"
+          rel="noopener noreferrer"
+          title="GitHub 仓库"
+          className="flex items-center justify-center p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-50 rounded-lg active:scale-90 transition-all duration-150 focus:outline-none"
+        >
+          <Github size={14} />
+        </a>
 
         {!authorized ? (
           <button
