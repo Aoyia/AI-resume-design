@@ -238,7 +238,7 @@ function isSameResumeContent(a: any, b: any): boolean {
     // 过滤掉值为 undefined 的属性，保证本地渲染状态字段与服务端反序列化后的纯 JSON 键值对能精准对齐
     const getValidKeys = (obj: any) => 
       Object.keys(obj).filter(
-        (k) => k !== 'id' && k !== 'resumeName' && obj[k] !== undefined
+        (k) => k !== 'id' && k !== 'resumeName' && k !== 'updatedAt' && obj[k] !== undefined
       );
 
     const keysA = getValidKeys(a);
