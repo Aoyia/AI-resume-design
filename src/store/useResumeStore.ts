@@ -201,7 +201,13 @@ const syncResumesMiddleware = <T extends ResumeStore>(
 
         // 仅当更新中显式包含了 resume 时，同步至 resumes 列表
         if (nextState.resume) {
-          const updatedResume = nextState.resume;
+          const updatedResume = { ...nextState.resume };
+
+          // 若不是来自服务端的同步，也不是系统初始或路由切换动作，则更新 updatedAt
+          if (!(nextState as any)._isSyncFromServer) {
+            updatedResume.updatedAt = Date.now();
+          }
+
           const currentResumes = nextState.resumes || state.resumes || [];
           const currentId = updatedResume.id || nextState.currentResumeId || state.currentResumeId;
 
@@ -218,6 +224,7 @@ const syncResumesMiddleware = <T extends ResumeStore>(
           }
           return {
             ...nextState,
+            resume: updatedResume,
             resumes: newResumes,
             currentResumeId: currentId,
           } as any;
@@ -717,10 +724,12 @@ export const useResumeStore = create<ResumeStore>()(
             ...cleanedData,
             id: s.currentResumeId,
             resumeName: s.resume.resumeName,
+            updatedAt: cleanedData.updatedAt || Date.now(),
           };
           return {
             resume: updated,
-          };
+            _isSyncFromServer: true,
+          } as any;
         }),
       importBackupPackage: (resumesList, override) =>
         set((s) => {
@@ -765,6 +774,9 @@ export const useResumeStore = create<ResumeStore>()(
               if (!cleaned.resumeName) {
                 cleaned.resumeName = `${cleaned.basicInfo?.name || '未命名'}_简历`;
               }
+              if (!cleaned.updatedAt) {
+                cleaned.updatedAt = 0;
+              }
               return cleaned;
             });
           }
@@ -772,6 +784,9 @@ export const useResumeStore = create<ResumeStore>()(
             state.resume = cleanResumeData(state.resume);
             if (state.resume && !state.resume.resumeName) {
               state.resume.resumeName = `${state.resume.basicInfo?.name || '未命名'}_简历`;
+            }
+            if (state.resume && !state.resume.updatedAt) {
+              state.resume.updatedAt = 0;
             }
           }
 
