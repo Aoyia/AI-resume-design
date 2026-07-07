@@ -19,14 +19,17 @@ export default function SyncServerConnector() {
   const reconnectTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
-    // 1. 安全判断当前环境是否允许同步（只在开发模式下的本地回路中生效）
-    const isDev = process.env.NODE_ENV === 'development';
+    // 安全判断当前环境是否允许同步
+    // 1. 本地 localhost/127.0.0.1 默认开启同步
+    // 2. 线上环境如果 URL 参数中携带了 ?sync=true 亦开启同步，方便与本地开发环境的 defaultResume.json 进行双向联调同步
     const isLocalhost = typeof window !== 'undefined' && (
       window.location.hostname === 'localhost' || 
       window.location.hostname === '127.0.0.1'
     );
+    const hasSyncParam = typeof window !== 'undefined' && 
+      new URLSearchParams(window.location.search).has('sync');
     
-    if (!isDev || !isLocalhost) return;
+    if (!isLocalhost && !hasSyncParam) return;
 
     let isDestroyed = false;
 
@@ -66,20 +69,40 @@ export default function SyncServerConnector() {
           const payload = JSON.parse(event.data);
           
           if (payload.type === 'server_changed') {
-            const receivedDataStr = JSON.stringify(payload.data);
+            const receivedData = payload.data;
+            const receivedDataStr = JSON.stringify(receivedData);
 
             if (receivedDataStr === lastSyncedDataRef.current) {
               return;
             }
 
             const currentResume = useResumeStore.getState().resume;
-            if (currentResume && isSameResumeContent(payload.data, currentResume)) {
+            if (currentResume && isSameResumeContent(receivedData, currentResume)) {
               lastSyncedDataRef.current = JSON.stringify(currentResume);
               return;
             }
 
+            // 解决更新冲突 (Last-Write-Wins 规则)
+            const clientUpdatedAt = currentResume?.updatedAt || 0;
+            const serverUpdatedAt = receivedData?.updatedAt || 0;
+
+            if (clientUpdatedAt > serverUpdatedAt) {
+              console.log('[SyncServerConnector] Client data is newer than server disk data. Rejecting server data and uploading local modifications.');
+              if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+                wsRef.current.send(
+                  JSON.stringify({
+                    type: 'client_changed',
+                    data: currentResume,
+                  })
+                );
+              }
+              return;
+            }
+
+            // 否则使用服务端数据覆盖 Web 界面
+            console.log('[SyncServerConnector] Server disk data is newer. Overwriting active resume on page.');
             lastSyncedDataRef.current = receivedDataStr;
-            useResumeStore.getState().overwriteActiveResume(payload.data);
+            useResumeStore.getState().overwriteActiveResume(receivedData);
 
             const updatedResume = useResumeStore.getState().resume;
             if (updatedResume) {
