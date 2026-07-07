@@ -17,6 +17,7 @@ import {
   LanguageItem,
   CompetitionItem,
   PublicationItem,
+  DEFAULT_SECTION_ORDER,
 } from '@/types/resume';
 import { uid } from '@/lib/utils';
 
@@ -162,6 +163,23 @@ function cleanResumeData(r: ResumeData): ResumeData {
   if (!r) return r;
 
   const copy = { ...r };
+
+  // 防御性补全：防止历史脏数据或外部不全数据导致 sectionOrder / theme 缺失而崩溃
+  if (!copy.sectionOrder) {
+    copy.sectionOrder = DEFAULT_SECTION_ORDER;
+  }
+  if (!copy.theme) {
+    copy.theme = {
+      templateId: 'classic',
+      primaryColor: '#7C3AED',
+      fontFamily: 'Noto Sans SC',
+      fontSize: 14,
+      lineHeight: 1.6,
+      sectionGap: 16,
+      dividerStyle: 'left-bar',
+      dividerHeight: 4,
+    };
+  }
 
   const cleanDescription = (desc: string) => {
     if (!desc) return desc;
