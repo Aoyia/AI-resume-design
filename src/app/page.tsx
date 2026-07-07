@@ -20,7 +20,7 @@ export default function EditorPage() {
     }
     return DEFAULT_WIDTH;
   });
-  const authorized = true;
+  const [authorized, setAuthorized] = useState(false);
   const isDragging = useRef(false);
   const startX = useRef(0);
   const startWidth = useRef(DEFAULT_WIDTH);
@@ -74,28 +74,30 @@ export default function EditorPage() {
   }, []);
 
   const handleStartEdit = () => {
-    // 无密码保护，直接进入编辑
+    setAuthorized(true);
   };
 
   const handleLogout = () => {
-    // 无需注销逻辑
+    setAuthorized(false);
   };
 
   return (
     <div className="h-screen flex flex-col overflow-hidden bg-slate-50">
-      <Toolbar 
-        authorized={authorized} 
-        onStartEdit={handleStartEdit} 
-        onLogout={handleLogout} 
-      />
+      {authorized && (
+        <Toolbar 
+          authorized={authorized} 
+          onStartEdit={handleStartEdit} 
+          onLogout={handleLogout} 
+        />
+      )}
       <div className="flex flex-1 overflow-hidden">
         {/* 左侧编辑面板 */}
         <aside
           ref={asideRef}
           style={{ 
-            width: editorWidth,
-            opacity: 1,
-            visibility: 'visible',
+            width: authorized ? editorWidth : 0,
+            opacity: authorized ? 1 : 0,
+            visibility: authorized ? 'visible' : 'hidden',
             transition: 'width 0.25s ease-out, opacity 0.2s ease-out, visibility 0.25s'
           }}
           className="shrink-0 border-r border-[var(--border)] bg-white overflow-hidden flex flex-col"
@@ -104,21 +106,23 @@ export default function EditorPage() {
         </aside>
 
         {/* 可拖拽分割条 */}
-        <div
-          ref={resizerRef}
-          onMouseDown={onMouseDown}
-          className="group relative w-1 shrink-0 bg-[var(--border)] hover:bg-[var(--primary)] transition-colors duration-150 cursor-col-resize z-10 flex items-center justify-center"
-          title="拖动以调整面板宽度"
-        >
-          {/* 拖动时的高亮指示条 */}
-          <div className="absolute inset-y-0 -left-1 -right-1" />
-          {/* 中央拖动把手点 */}
-          <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-150 flex flex-col gap-0.5 pointer-events-none">
-            <div className="w-1 h-1 rounded-full bg-[var(--primary)]" />
-            <div className="w-1 h-1 rounded-full bg-[var(--primary)]" />
-            <div className="w-1 h-1 rounded-full bg-[var(--primary)]" />
+        {authorized && (
+          <div
+            ref={resizerRef}
+            onMouseDown={onMouseDown}
+            className="group relative w-1 shrink-0 bg-[var(--border)] hover:bg-[var(--primary)] transition-colors duration-150 cursor-col-resize z-10 flex items-center justify-center"
+            title="拖动以调整面板宽度"
+          >
+            {/* 拖动时的高亮指示条 */}
+            <div className="absolute inset-y-0 -left-1 -right-1" />
+            {/* 中央拖动把手点 */}
+            <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-150 flex flex-col gap-0.5 pointer-events-none">
+              <div className="w-1 h-1 rounded-full bg-[var(--primary)]" />
+              <div className="w-1 h-1 rounded-full bg-[var(--primary)]" />
+              <div className="w-1 h-1 rounded-full bg-[var(--primary)]" />
+            </div>
           </div>
-        </div>
+        )}
 
         {/* 右侧预览面板 */}
         <main className="flex-1 overflow-hidden min-w-0 bg-slate-100">
