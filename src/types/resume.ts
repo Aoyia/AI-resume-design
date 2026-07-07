@@ -130,7 +130,6 @@ export interface ResumeData {
   /** 控制左侧面板大模块的显示顺序 */
   sectionOrder: SectionKey[];
   customTitles?: Partial<Record<SectionKey, string>>;
-  updatedAt?: number; // 新增：最后修改时间戳
 }
 
 export type SectionKey =
