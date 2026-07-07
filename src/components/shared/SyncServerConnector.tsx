@@ -1,16 +1,16 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useResumeStore } from '@/store/useResumeStore';
 
 /**
- * 简历双向同步系统 - 前端 WebSocket 连接器组件
+ * 简历双向同步系统 - 前端 WebSocket 连接器组件与状态诊断浮层
  * 
- * 优化点：
- * 1. 消除 SSR 期间对客户端全局对象的触达，防御 Hydration 隐患。
- * 2. 彻底解决组件卸载/热更新时 WebSocket 的“僵尸连接”与内存泄漏漏洞。
- * 3. 避免打字期间高频同步执行 JSON.stringify，将序列化移动到防抖定时器内，流畅度提升 100%。
- * 4. 优化比对算法，使用 Object.is 比对并过滤 undefined 字段，增强健壮性。
+ * 优化与架构改进：
+ * 1. 采用以本地磁盘文件 defaultResume.json 为主权威源的极简单向同步流。
+ * 2. 将数据同步防抖时间缩短到 150ms，打字几乎无延迟瞬时同步，避免页面刷新数据丢失。
+ * 3. 彻底删除不精确的系统时间戳，在 server_changed 推送到达时，只对“文字内容实际不一致”的数据触发 overwriteActiveResume，杜绝数据竞态覆盖。
+ * 4. 常驻右下角极简半透明诊断悬浮球，直观指示当前的 WebSocket 状态与数据同步阶段。
  */
 export default function SyncServerConnector() {
   const wsRef = useRef<WebSocket | null>(null);
@@ -18,10 +18,10 @@ export default function SyncServerConnector() {
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
   const reconnectTimerRef = useRef<NodeJS.Timeout | null>(null);
 
+  // 可视化同步状态
+  const [wsStatus, setWsStatus] = useState<'connected' | 'syncing' | 'disconnected'>('disconnected');
+
   useEffect(() => {
-    // 安全判断当前环境是否允许同步
-    // 1. 本地 localhost/127.0.0.1 默认开启同步
-    // 2. 线上环境如果 URL 参数中携带了 ?sync=true 亦开启同步，方便与本地开发环境的 defaultResume.json 进行双向联调同步
     const isLocalhost = typeof window !== 'undefined' && (
       window.location.hostname === 'localhost' || 
       window.location.hostname === '127.0.0.1'
@@ -33,7 +33,7 @@ export default function SyncServerConnector() {
 
     let isDestroyed = false;
 
-    // 初始化 lastSyncedDataRef 快照为当前 store 内的数据
+    // 初始化快照
     const initialResume = useResumeStore.getState().resume;
     if (initialResume) {
       lastSyncedDataRef.current = JSON.stringify(initialResume);
@@ -43,7 +43,7 @@ export default function SyncServerConnector() {
       if (isDestroyed) return;
 
       if (wsRef.current) {
-        wsRef.current.onclose = null; // 确保关闭旧连接时不会误触发旧实例的重连
+        wsRef.current.onclose = null;
         wsRef.current.close();
       }
 
@@ -57,6 +57,7 @@ export default function SyncServerConnector() {
           return;
         }
         console.log('[SyncServerConnector] WebSocket connected successfully.');
+        setWsStatus('connected');
         if (reconnectTimerRef.current) {
           clearTimeout(reconnectTimerRef.current);
           reconnectTimerRef.current = null;
@@ -77,30 +78,16 @@ export default function SyncServerConnector() {
             }
 
             const currentResume = useResumeStore.getState().resume;
+            
+            // 1. 递归内容比对（排除 id、resumeName 和 updatedAt 影响）
             if (currentResume && isSameResumeContent(receivedData, currentResume)) {
+              // 实际内容完全一致（通常是自己刚才推送写盘引起的服务端广播），仅对齐缓存并忽略覆盖
               lastSyncedDataRef.current = JSON.stringify(currentResume);
               return;
             }
 
-            // 解决更新冲突 (Last-Write-Wins 规则)
-            const clientUpdatedAt = currentResume?.updatedAt || 0;
-            const serverUpdatedAt = receivedData?.updatedAt || 0;
-
-            if (clientUpdatedAt > serverUpdatedAt) {
-              console.log('[SyncServerConnector] Client data is newer than server disk data. Rejecting server data and uploading local modifications.');
-              if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
-                wsRef.current.send(
-                  JSON.stringify({
-                    type: 'client_changed',
-                    data: currentResume,
-                  })
-                );
-              }
-              return;
-            }
-
-            // 否则使用服务端数据覆盖 Web 界面
-            console.log('[SyncServerConnector] Server disk data is newer. Overwriting active resume on page.');
+            // 2. 否则说明是本地文件被外部（例如 AI）修改了，客户端直接覆盖本地页面
+            console.log('[SyncServerConnector] External file change detected. Overwriting active resume on page.');
             lastSyncedDataRef.current = receivedDataStr;
             useResumeStore.getState().overwriteActiveResume(receivedData);
 
@@ -115,7 +102,8 @@ export default function SyncServerConnector() {
       };
 
       ws.onclose = () => {
-        if (isDestroyed) return; // 已卸载状态下拒绝任何重连
+        if (isDestroyed) return;
+        setWsStatus('disconnected');
         console.warn('[SyncServerConnector] WebSocket disconnected. Reconnecting in 5 seconds...');
         scheduleReconnect();
       };
@@ -138,31 +126,31 @@ export default function SyncServerConnector() {
     // 启动物理连接
     connect();
 
-    // 2. 状态订阅监听逻辑（合并至同一 Effect 管理生命周期）
     let lastResume = useResumeStore.getState().resume;
 
+    // 监听 Zustand Store 状态更改进行推送
     const unsubscribe = useResumeStore.subscribe((state) => {
       const resume = state.resume;
       if (!resume || isDestroyed) return;
 
-      // 仅在 resume 引用发生变化时执行
       if (resume === lastResume) {
         return;
       }
       lastResume = resume;
+      setWsStatus('syncing');
 
-      // 清除上一次的防抖定时器
       if (debounceTimerRef.current) {
         clearTimeout(debounceTimerRef.current);
       }
 
-      // 将昂贵的序列化与比较工作移入 800ms 防抖定时器内，打字时仅重置定时器
+      // 150ms 极速防抖同步，打字时仅重置定时器
       debounceTimerRef.current = setTimeout(() => {
         const currentResume = useResumeStore.getState().resume;
         if (!currentResume || isDestroyed) return;
 
         const resumeStr = JSON.stringify(currentResume);
         if (resumeStr === lastSyncedDataRef.current) {
+          setWsStatus('connected');
           return;
         }
 
@@ -175,30 +163,24 @@ export default function SyncServerConnector() {
             })
           );
           lastSyncedDataRef.current = resumeStr;
+          setWsStatus('connected');
+        } else {
+          setWsStatus('disconnected');
         }
-      }, 800);
+      }, 150);
     });
 
-    // 统一销毁函数
     return () => {
       isDestroyed = true;
-      
-      // 1. 取消 Zustand 状态订阅
       unsubscribe();
-
-      // 2. 清理防抖定时器
       if (debounceTimerRef.current) {
         clearTimeout(debounceTimerRef.current);
         debounceTimerRef.current = null;
       }
-
-      // 3. 清理断线重连定时器
       if (reconnectTimerRef.current) {
         clearTimeout(reconnectTimerRef.current);
         reconnectTimerRef.current = null;
       }
-
-      // 4. 清理 WebSocket 事件监听并安全关闭
       if (wsRef.current) {
         wsRef.current.onopen = null;
         wsRef.current.onmessage = null;
@@ -210,11 +192,54 @@ export default function SyncServerConnector() {
     };
   }, []);
 
-  return null;
+  return (
+    <div 
+      id="sync-diag-indicator"
+      style={{
+        position: 'fixed',
+        bottom: '16px',
+        right: '16px',
+        zIndex: 99999,
+        display: 'flex',
+        alignItems: 'center',
+        gap: '8px',
+        padding: '6px 12px',
+        borderRadius: '20px',
+        backgroundColor: 'rgba(30, 41, 59, 0.85)',
+        backdropFilter: 'blur(4px)',
+        color: '#ffffff',
+        fontSize: '11px',
+        fontFamily: 'system-ui, sans-serif',
+        border: '1px solid rgba(255, 255, 255, 0.1)',
+        pointerEvents: 'none',
+        userSelect: 'none',
+        boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+      }}
+    >
+      <span 
+        style={{
+          display: 'inline-block',
+          width: '8px',
+          height: '8px',
+          borderRadius: '50%',
+          backgroundColor: 
+            wsStatus === 'connected' ? '#10B981' : 
+            wsStatus === 'syncing' ? '#F59E0B' : '#EF4444',
+          boxShadow: 
+            wsStatus === 'connected' ? '0 0 8px #10B981' : 
+            wsStatus === 'syncing' ? '0 0 8px #F59E0B' : '0 0 8px #EF4444',
+        }}
+      />
+      <span>
+        {wsStatus === 'connected' ? 'Synced' : 
+         wsStatus === 'syncing' ? 'Saving...' : 'Offline'}
+      </span>
+    </div>
+  );
 }
 
 /**
- * 递归判断两个简历对象/数组除了 'id' 和 'resumeName' 以外的内容是否完全一致
+ * 递归判断两个简历对象/数组除了 'id'、'resumeName' 和 'updatedAt' 以外的内容是否完全一致
  */
 function isSameResumeContent(a: any, b: any): boolean {
   if (Object.is(a, b)) return true;
@@ -235,7 +260,7 @@ function isSameResumeContent(a: any, b: any): boolean {
 
   // 3. 普通对象类型校验
   if (typeof a === 'object') {
-    // 过滤掉值为 undefined 的属性，且过滤掉 'updatedAt' 时间戳，保证纯内容比对能够对齐
+    // 过滤掉特定属性与值为 undefined 的属性，保证内容比对能够对齐
     const getValidKeys = (obj: any) => 
       Object.keys(obj).filter(
         (k) => k !== 'id' && k !== 'resumeName' && k !== 'updatedAt' && obj[k] !== undefined
