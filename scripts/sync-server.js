@@ -23,7 +23,12 @@ function readResumeData() {
       return null;
     }
     const data = fs.readFileSync(FILE_PATH, 'utf-8');
-    return JSON.parse(data);
+    const parsed = JSON.parse(data);
+    
+    // 获取文件的最后物理修改时间戳
+    const stats = fs.statSync(FILE_PATH);
+    parsed.updatedAt = Math.max(parsed.updatedAt || 0, Math.floor(stats.mtimeMs));
+    return parsed;
   } catch (error) {
     console.error('[Sync Server] Error reading resume file:', error.message);
     return null;
@@ -91,6 +96,11 @@ const watcher = fs.watch(FILE_PATH, (eventType, filename) => {
         console.log('[Sync Server] File changed on disk, broadcasting...');
         lastFileContent = currentContent;
         const data = JSON.parse(currentContent);
+        
+        // 获取更新后的 mtimeMs 并广播给客户端
+        const stats = fs.statSync(FILE_PATH);
+        data.updatedAt = Math.max(data.updatedAt || 0, Math.floor(stats.mtimeMs));
+        
         broadcast(data);
       } else {
         console.log('[Sync Server] File watch triggered but content is unchanged');
