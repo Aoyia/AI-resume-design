@@ -130,6 +130,7 @@ export interface ResumeData {
   /** 控制左侧面板大模块的显示顺序 */
   sectionOrder: SectionKey[];
   customTitles?: Partial<Record<SectionKey, string>>;
+  version?: number; // 版本号，用于防止刷新或离线切换造成的数据丢失
 }
 
 export type SectionKey =

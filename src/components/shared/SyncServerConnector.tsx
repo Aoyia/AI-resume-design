@@ -7,9 +7,11 @@ import { useResumeStore } from '@/store/useResumeStore';
  * 简历双向同步系统 - 前端 RESTful HTTP 同步调度器 (无物理 DOM UI)
  * 
  * 优化与架构改进：
- * 1. 采用 Next.js API 路由 + 150ms HTTP POST 防抖写入 + 1.5 秒轻量 HTTP GET 时间戳轮询，彻底废除独立的 WebSocket。
- * 2. 只有在用户静止且磁盘上的物理修改时间 mtime 大于客户端最后同步时间时，才拉取最新内容并覆盖，完美解决打字覆盖的 Race Condition。
- * 3. 剥离了多余的右下角悬浮球渲染，将连接状态以 synced / saving / offline 映射直接驱动 Zustand Store 的全局状态，从而活化左上角原生的“草稿保存/云同步”指示器。
+ * 1. 采用 Next.js API 路由 + 150ms HTTP POST 防抖写入 + 1.5 秒 light-weight HTTP GET 时间戳轮询，彻底废除独立的 WebSocket。
+ * 2. 只有在用户静止（Synced 状态）且磁盘上的物理修改时间 mtime 大于客户端最后同步时间时，才拉取最新内容并覆盖，完美解决打字覆盖的 Race Condition。
+ * 3. [Fail-Safe 双保险]：
+ *    - 版本号对齐 (Version LWW)：引入 version 自增版本。首屏加载若 clientVersion > serverVersion，拒绝被旧磁盘数据覆盖，主动向服务端 POST 同步；
+ *    - 临终同步守卫 (Unload Guardian)：绑定 beforeunload 挂载。在刷新/关闭浏览器且本地有脏数据未写入时，使用 fetch keepalive: true 强制在后台完成最后一次写盘。
  */
 export default function SyncServerConnector() {
   const lastSyncedDataRef = useRef<string>('');
@@ -43,6 +45,37 @@ export default function SyncServerConnector() {
       useResumeStore.getState().setSyncStatus(mapped);
     };
 
+    // 辅助同步函数
+    async function syncToDisk(resumeData: any) {
+      isWritingRef.current = true;
+      try {
+        console.log('[SyncServerConnector] Syncing local changes to disk via REST API...');
+        const resumeStr = JSON.stringify(resumeData);
+        const res = await fetch('/api/sync', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: resumeStr,
+        });
+
+        if (res.ok) {
+          const { mtime } = await res.json();
+          lastSyncedDataRef.current = resumeStr;
+          lastSyncedMtimeRef.current = mtime;
+          setGlobalSyncStatus('connected');
+        } else {
+          setGlobalSyncStatus('disconnected');
+        }
+      } catch (err) {
+        console.warn('[SyncServerConnector] HTTP POST sync failed:', err);
+        setGlobalSyncStatus('disconnected');
+      } finally {
+        isWritingRef.current = false;
+        isDirtyRef.current = false;
+      }
+    }
+
     // 1. 首屏加载：从服务端获取最新最权威的内容来覆盖本地草稿
     async function loadInitialData() {
       try {
@@ -52,16 +85,24 @@ export default function SyncServerConnector() {
           const receivedDataStr = JSON.stringify(data);
           
           const currentResume = useResumeStore.getState().resume;
-          
-          // 如果本地内容为空，或者与服务端有真实差异，无条件以服务端为准覆盖
-          if (!currentResume || !isSameResumeContent(data, currentResume)) {
-            console.log('[SyncServerConnector] Initial load: Disk content differs. Overwriting local Zustand Store.');
-            useResumeStore.getState().overwriteActiveResume(data);
+          const clientVersion = currentResume?.version || 0;
+          const serverVersion = data?.version || 0;
+
+          if (clientVersion > serverVersion) {
+            // 客户端版本更新，说明可能在防抖内刷新了页面，或者离线做了修改还没来得及发。
+            // 此时拒绝用服务端旧的覆盖本地，而是主动把本地数据 POST 过去。
+            console.log(`[SyncServerConnector] Initial load check: clientVersion (${clientVersion}) > serverVersion (${serverVersion}). Syncing local to disk.`);
+            await syncToDisk(currentResume);
+          } else {
+            // 服务端版本更新，或者版本一致但文字内容发生实际变化，覆盖本地
+            if (!currentResume || !isSameResumeContent(data, currentResume)) {
+              console.log('[SyncServerConnector] Initial load: Disk content differs. Overwriting local Zustand Store.');
+              useResumeStore.getState().overwriteActiveResume(data);
+            }
+            lastSyncedDataRef.current = receivedDataStr;
+            lastSyncedMtimeRef.current = mtime;
+            setGlobalSyncStatus('connected');
           }
-          
-          lastSyncedDataRef.current = receivedDataStr;
-          lastSyncedMtimeRef.current = mtime;
-          setGlobalSyncStatus('connected');
         } else {
           setGlobalSyncStatus('disconnected');
         }
@@ -160,39 +201,35 @@ export default function SyncServerConnector() {
           return;
         }
 
-        // 发起 HTTP POST 写入
-        isWritingRef.current = true;
-        try {
-          console.log('[SyncServerConnector] Syncing local changes to disk via REST API...');
-          const res = await fetch('/api/sync', {
+        await syncToDisk(currentResume);
+      }, 150);
+    });
+
+    // 4. [Fail-Safe] Unload 临终同步守卫：监听刷新与关闭动作
+    const handleBeforeUnload = () => {
+      if (isDirtyRef.current) {
+        const currentResume = useResumeStore.getState().resume;
+        if (currentResume) {
+          // 使用 keepalive: true 发送 POST 请求，确保即使页面在几毫秒内销毁，请求也会在系统底层后台被安全发送和写盘
+          console.log('[SyncServerConnector] Beforeunload: triggers keepalive push to save final changes.');
+          fetch('/api/sync', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
             },
-            body: resumeStr,
+            body: JSON.stringify(currentResume),
+            keepalive: true,
           });
-
-          if (res.ok) {
-            const { mtime } = await res.json();
-            lastSyncedDataRef.current = resumeStr;
-            lastSyncedMtimeRef.current = mtime;
-            setGlobalSyncStatus('connected');
-          } else {
-            setGlobalSyncStatus('disconnected');
-          }
-        } catch (err) {
-          console.warn('[SyncServerConnector] HTTP POST sync failed:', err);
-          setGlobalSyncStatus('disconnected');
-        } finally {
-          isWritingRef.current = false;
-          isDirtyRef.current = false;
         }
-      }, 150);
-    });
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
 
     return () => {
       isDestroyed = true;
       unsubscribe();
+      window.removeEventListener('beforeunload', handleBeforeUnload);
       if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
       if (pollingTimerRef.current) clearTimeout(pollingTimerRef.current);
     };
@@ -202,7 +239,7 @@ export default function SyncServerConnector() {
 }
 
 /**
- * 递归判断两个简历对象/数组除了 'id'、'resumeName' 和 'updatedAt' 以外的内容是否完全一致
+ * 递归判断两个简历对象/数组除了 'id'、'resumeName'、'updatedAt' 和 'version' 以外的内容是否完全一致
  */
 function isSameResumeContent(a: any, b: any): boolean {
   if (Object.is(a, b)) return true;
@@ -226,7 +263,7 @@ function isSameResumeContent(a: any, b: any): boolean {
     // 过滤掉特定属性与值为 undefined 的属性，保证内容比对能够对齐
     const getValidKeys = (obj: any) => 
       Object.keys(obj).filter(
-        (k) => k !== 'id' && k !== 'resumeName' && k !== 'updatedAt' && obj[k] !== undefined
+        (k) => k !== 'id' && k !== 'resumeName' && k !== 'updatedAt' && k !== 'version' && obj[k] !== undefined
       );
 
     const keysA = getValidKeys(a);

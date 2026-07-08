@@ -223,7 +223,12 @@ const syncResumesMiddleware = <T extends ResumeStore>(
 
         // 仅当更新中显式包含了 resume 时，同步至 resumes 列表
         if (nextState.resume) {
-          const updatedResume = nextState.resume;
+          const updatedResume = { ...nextState.resume };
+
+          // 核心点：只有当不是调用 overwriteActiveResume（即没有 _isSyncFromServer 标记）时，自增 version
+          if (!(nextState as any)._isSyncFromServer) {
+            updatedResume.version = (state.resume?.version || 0) + 1;
+          }
           const currentResumes = nextState.resumes || state.resumes || [];
           const currentId = updatedResume.id || nextState.currentResumeId || state.currentResumeId;
 
@@ -742,7 +747,8 @@ export const useResumeStore = create<ResumeStore>()(
           };
           return {
             resume: updated,
-          };
+            _isSyncFromServer: true,
+          } as any;
         }),
       importBackupPackage: (resumesList, override) =>
         set((s) => {
