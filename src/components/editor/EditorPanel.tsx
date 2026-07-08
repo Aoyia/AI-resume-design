@@ -63,6 +63,11 @@ function SortableSection({ id }: { id: SectionKey }) {
     if (isCurrentActive) {
       // 稍微延迟，确保折叠面板开始展开，从而能更准确地滚动到对应位置
       const timer = setTimeout(() => {
+        // 若此时存在具体的子项定位 (activeItemId)，大模块滚动把控制权彻底让渡给子卡片，自身不执行滚动，防止动画冲突卡顿
+        if (useResumeStore.getState().activeItemId) {
+          return;
+        }
+
         const el = document.getElementById(`editor-section-${id}`);
         if (el) {
           smoothScrollTo(el, 400, 'start');
