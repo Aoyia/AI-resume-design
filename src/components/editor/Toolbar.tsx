@@ -338,13 +338,13 @@ export default function Toolbar({ authorized, onStartEdit, onLogout }: ToolbarPr
           {syncStatus === 'synced' && (
             <div className={cn(
               "flex items-center gap-1.5 transition-all duration-300",
-              pulseActive && "scale-105 text-emerald-500"
+              pulseActive && "scale-105 text-slate-500"
             )}>
               <Cloud className={cn(
                 "w-3.5 h-3.5 transition-colors duration-300",
-                pulseActive ? "text-emerald-500" : "text-emerald-500/80"
+                pulseActive ? "text-slate-500" : "text-slate-400/80"
               )} />
-              <span className="text-xs text-emerald-600 font-medium">已同步至本地 defaultResume.json</span>
+              <span className="text-xs text-slate-400 font-medium">已同步至本地 defaultResume.json</span>
             </div>
           )}
           {syncStatus === 'offline' && (
