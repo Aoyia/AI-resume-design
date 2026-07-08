@@ -331,7 +331,7 @@ export default function Toolbar({ authorized, onStartEdit, onLogout }: ToolbarPr
             <>
               <Cloud className="w-3.5 h-3.5 text-[var(--primary)] animate-pulse" />
               <span className="text-xs text-[var(--primary)] font-medium">
-                {isLoggedIn ? '云端同步中...' : '本地保存中...'}
+                本地写入中...
               </span>
             </>
           )}
@@ -344,7 +344,7 @@ export default function Toolbar({ authorized, onStartEdit, onLogout }: ToolbarPr
                 "w-3.5 h-3.5 transition-colors duration-300",
                 pulseActive ? "text-emerald-500" : "text-emerald-500/80"
               )} />
-              <span className="text-xs text-emerald-600 font-medium">数据已同步云端</span>
+              <span className="text-xs text-emerald-600 font-medium">已同步至本地 defaultResume.json</span>
             </div>
           )}
           {syncStatus === 'offline' && (
