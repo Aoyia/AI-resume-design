@@ -125,22 +125,34 @@ const SortableExperienceItem = memo(function SortableExperienceItem({
     domRef.current = node;
   };
 
+  const highlightTimerRef = useRef<NodeJS.Timeout | null>(null);
+
   useEffect(() => {
     if (activeItemId === id && domRef.current) {
+      const el = domRef.current;
       // 1. 平滑滚动到当前项目/工作卡片中心
-      domRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
 
       // 2. 触发 1.5 秒的呼吸发光高亮提示
-      domRef.current.classList.add('ring-2', 'ring-[var(--primary)]', 'ring-offset-2', 'transition-all', 'duration-300');
-      const timer = setTimeout(() => {
-        domRef.current?.classList.remove('ring-2', 'ring-[var(--primary)]', 'ring-offset-2');
+      el.classList.add('ring-2', 'ring-[var(--primary)]', 'ring-offset-2', 'transition-all', 'duration-300');
+      
+      if (highlightTimerRef.current) clearTimeout(highlightTimerRef.current);
+      highlightTimerRef.current = setTimeout(() => {
+        el.classList.remove('ring-2', 'ring-[var(--primary)]', 'ring-offset-2');
+        highlightTimerRef.current = null;
       }, 1500);
 
       // 3. 消费掉当前全局状态
       setActiveItemId(null);
-      return () => clearTimeout(timer);
     }
   }, [activeItemId, id, setActiveItemId]);
+
+  // 组件卸载时防内存泄露的安全清理
+  useEffect(() => {
+    return () => {
+      if (highlightTimerRef.current) clearTimeout(highlightTimerRef.current);
+    };
+  }, []);
 
   if (!item) return null;
 
