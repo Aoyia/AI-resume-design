@@ -4,22 +4,26 @@ import { useEffect, useRef, useState } from 'react';
 import { useResumeStore } from '@/store/useResumeStore';
 
 /**
- * 简历双向同步系统 - 前端 WebSocket 连接器组件与状态诊断浮层
+ * 简历双向同步系统 - 前端 RESTful HTTP 同步调度器与诊断浮层
  * 
  * 优化与架构改进：
- * 1. 采用以本地磁盘文件 defaultResume.json 为主权威源的极简单向同步流。
- * 2. 将数据同步防抖时间缩短到 150ms，打字几乎无延迟瞬时同步，避免页面刷新数据丢失。
- * 3. 彻底删除不精确的系统时间戳，在 server_changed 推送到达时，只对“文字内容实际不一致”的数据触发 overwriteActiveResume，杜绝数据竞态覆盖。
- * 4. 常驻右下角极简半透明诊断悬浮球，直观指示当前的 WebSocket 状态与数据同步阶段。
+ * 1. 采用 Next.js API 路由 + 150ms HTTP POST 防抖写入 + 1.5 秒轻量 HTTP GET 时间戳轮询，彻底废除独立的 WebSocket。
+ * 2. 只有在用户静止（Synced 状态）且磁盘上的物理修改时间 mtime 大于客户端最后同步时间时，才拉取最新内容并覆盖，完美解决打字覆盖的 Race Condition。
+ * 3. 诊断悬浮球直观反馈当前同步状态。
  */
 export default function SyncServerConnector() {
-  const wsRef = useRef<WebSocket | null>(null);
   const lastSyncedDataRef = useRef<string>('');
+  const lastSyncedMtimeRef = useRef<number>(0);
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
-  const reconnectTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const pollingTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-  // 可视化同步状态
-  const [wsStatus, setWsStatus] = useState<'connected' | 'syncing' | 'disconnected'>('disconnected');
+  // 标志位：当前是否正有写入请求处于 Pending 状态
+  const isWritingRef = useRef<boolean>(false);
+  // 标志位：本地是否有最新的编辑尚未同步到服务端 (打字中/防抖挂起)
+  const isDirtyRef = useRef<boolean>(false);
+
+  // 诊断状态
+  const [syncStatus, setSyncStatus] = useState<'connected' | 'syncing' | 'disconnected'>('disconnected');
 
   useEffect(() => {
     const isLocalhost = typeof window !== 'undefined' && (
@@ -33,102 +37,96 @@ export default function SyncServerConnector() {
 
     let isDestroyed = false;
 
-    // 初始化快照
-    const initialResume = useResumeStore.getState().resume;
-    if (initialResume) {
-      lastSyncedDataRef.current = JSON.stringify(initialResume);
+    // 1. 首屏加载：从服务端获取最新最权威的内容来覆盖本地草稿
+    async function loadInitialData() {
+      try {
+        const res = await fetch('/api/sync');
+        if (res.ok) {
+          const { data, mtime } = await res.json();
+          const receivedDataStr = JSON.stringify(data);
+          
+          const currentResume = useResumeStore.getState().resume;
+          
+          // 如果本地内容为空，或者与服务端有真实差异，无条件以服务端为准覆盖
+          if (!currentResume || !isSameResumeContent(data, currentResume)) {
+            console.log('[SyncServerConnector] Initial load: Disk content differs. Overwriting local Zustand Store.');
+            useResumeStore.getState().overwriteActiveResume(data);
+          }
+          
+          lastSyncedDataRef.current = receivedDataStr;
+          lastSyncedMtimeRef.current = mtime;
+          setSyncStatus('connected');
+        } else {
+          setSyncStatus('disconnected');
+        }
+      } catch (err) {
+        console.warn('[SyncServerConnector] Failed to fetch initial data:', err);
+        setSyncStatus('disconnected');
+      }
     }
 
-    function connect() {
+    loadInitialData();
+
+    // 2. HTTP 轮询检测 (每 1.5 秒一次)
+    function startPolling() {
       if (isDestroyed) return;
 
-      if (wsRef.current) {
-        wsRef.current.onclose = null;
-        wsRef.current.close();
-      }
-
-      console.log('[SyncServerConnector] Connecting to ws://localhost:3001...');
-      const ws = new WebSocket('ws://localhost:3001');
-      wsRef.current = ws;
-
-      ws.onopen = () => {
-        if (isDestroyed) {
-          ws.close();
+      pollingTimerRef.current = setTimeout(async () => {
+        // 如果本地正在发生修改（打字防抖中）或正在执行 POST 写入，直接跳过本次时间戳 check，严防打字被覆盖
+        if (isDirtyRef.current || isWritingRef.current) {
+          scheduleNextPolling();
           return;
         }
-        console.log('[SyncServerConnector] WebSocket connected successfully.');
-        setWsStatus('connected');
-        if (reconnectTimerRef.current) {
-          clearTimeout(reconnectTimerRef.current);
-          reconnectTimerRef.current = null;
-        }
-      };
 
-      ws.onmessage = (event) => {
-        if (isDestroyed) return;
         try {
-          const payload = JSON.parse(event.data);
-          
-          if (payload.type === 'server_changed') {
-            const receivedData = payload.data;
-            const receivedDataStr = JSON.stringify(receivedData);
+          const res = await fetch('/api/sync?action=check');
+          if (res.ok) {
+            const { mtime } = await res.json();
+            setSyncStatus('connected');
 
-            if (receivedDataStr === lastSyncedDataRef.current) {
-              return;
+            // 如果磁盘上的修改时间戳大于我们最后一次同步记录的时间戳，证明外部（如 AI）修改了文件
+            if (mtime > lastSyncedMtimeRef.current) {
+              console.log('[SyncServerConnector] Newer modifications found on disk. Fetching update...');
+              
+              const dataRes = await fetch('/api/sync');
+              if (dataRes.ok) {
+                const { data, mtime: newMtime } = await dataRes.json();
+                const receivedDataStr = JSON.stringify(data);
+
+                const currentResume = useResumeStore.getState().resume;
+                
+                // 仅在简历内容有实际不同时才覆盖
+                if (currentResume && !isSameResumeContent(data, currentResume)) {
+                  console.log('[SyncServerConnector] Content updated externally. Overwriting local store.');
+                  useResumeStore.getState().overwriteActiveResume(data);
+                  lastSyncedDataRef.current = receivedDataStr;
+                }
+                lastSyncedMtimeRef.current = newMtime;
+              }
             }
-
-            const currentResume = useResumeStore.getState().resume;
-            
-            // 1. 递归内容比对（排除 id、resumeName 和 updatedAt 影响）
-            if (currentResume && isSameResumeContent(receivedData, currentResume)) {
-              // 实际内容完全一致（通常是自己刚才推送写盘引起的服务端广播），仅对齐缓存并忽略覆盖
-              lastSyncedDataRef.current = JSON.stringify(currentResume);
-              return;
-            }
-
-            // 2. 否则说明是本地文件被外部（例如 AI）修改了，客户端直接覆盖本地页面
-            console.log('[SyncServerConnector] External file change detected. Overwriting active resume on page.');
-            lastSyncedDataRef.current = receivedDataStr;
-            useResumeStore.getState().overwriteActiveResume(receivedData);
-
-            const updatedResume = useResumeStore.getState().resume;
-            if (updatedResume) {
-              lastSyncedDataRef.current = JSON.stringify(updatedResume);
-            }
+          } else {
+            setSyncStatus('disconnected');
           }
         } catch (err) {
-          console.warn('[SyncServerConnector] Failed to process message from WebSocket server:', err);
+          console.warn('[SyncServerConnector] Polling check failed:', err);
+          setSyncStatus('disconnected');
         }
-      };
 
-      ws.onclose = () => {
-        if (isDestroyed) return;
-        setWsStatus('disconnected');
-        console.warn('[SyncServerConnector] WebSocket disconnected. Reconnecting in 5 seconds...');
-        scheduleReconnect();
-      };
-
-      ws.onerror = (err) => {
-        if (isDestroyed) return;
-        console.warn('[SyncServerConnector] WebSocket connection error:', err);
-        ws.close();
-      };
+        scheduleNextPolling();
+      }, 1500);
     }
 
-    function scheduleReconnect() {
-      if (isDestroyed || reconnectTimerRef.current) return;
-      reconnectTimerRef.current = setTimeout(() => {
-        reconnectTimerRef.current = null;
-        connect();
-      }, 5000);
+    function scheduleNextPolling() {
+      if (isDestroyed) return;
+      if (pollingTimerRef.current) clearTimeout(pollingTimerRef.current);
+      startPolling();
     }
 
-    // 启动物理连接
-    connect();
+    startPolling();
 
+    // 3. Zustand Store 变更订阅监听
     let lastResume = useResumeStore.getState().resume;
 
-    // 监听 Zustand Store 状态更改进行推送
     const unsubscribe = useResumeStore.subscribe((state) => {
       const resume = state.resume;
       if (!resume || isDestroyed) return;
@@ -137,35 +135,51 @@ export default function SyncServerConnector() {
         return;
       }
       lastResume = resume;
-      setWsStatus('syncing');
+      isDirtyRef.current = true;
+      setSyncStatus('syncing');
 
       if (debounceTimerRef.current) {
         clearTimeout(debounceTimerRef.current);
       }
 
       // 150ms 极速防抖同步，打字时仅重置定时器
-      debounceTimerRef.current = setTimeout(() => {
+      debounceTimerRef.current = setTimeout(async () => {
         const currentResume = useResumeStore.getState().resume;
         if (!currentResume || isDestroyed) return;
 
         const resumeStr = JSON.stringify(currentResume);
         if (resumeStr === lastSyncedDataRef.current) {
-          setWsStatus('connected');
+          isDirtyRef.current = false;
+          setSyncStatus('connected');
           return;
         }
 
-        if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
-          console.log('[SyncServerConnector] Local changes detected, syncing to server...');
-          wsRef.current.send(
-            JSON.stringify({
-              type: 'client_changed',
-              data: currentResume,
-            })
-          );
-          lastSyncedDataRef.current = resumeStr;
-          setWsStatus('connected');
-        } else {
-          setWsStatus('disconnected');
+        // 发起 HTTP POST 写入
+        isWritingRef.current = true;
+        try {
+          console.log('[SyncServerConnector] Syncing local changes to disk via REST API...');
+          const res = await fetch('/api/sync', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: resumeStr,
+          });
+
+          if (res.ok) {
+            const { mtime } = await res.json();
+            lastSyncedDataRef.current = resumeStr;
+            lastSyncedMtimeRef.current = mtime;
+            setSyncStatus('connected');
+          } else {
+            setSyncStatus('disconnected');
+          }
+        } catch (err) {
+          console.warn('[SyncServerConnector] HTTP POST sync failed:', err);
+          setSyncStatus('disconnected');
+        } finally {
+          isWritingRef.current = false;
+          isDirtyRef.current = false;
         }
       }, 150);
     });
@@ -173,22 +187,8 @@ export default function SyncServerConnector() {
     return () => {
       isDestroyed = true;
       unsubscribe();
-      if (debounceTimerRef.current) {
-        clearTimeout(debounceTimerRef.current);
-        debounceTimerRef.current = null;
-      }
-      if (reconnectTimerRef.current) {
-        clearTimeout(reconnectTimerRef.current);
-        reconnectTimerRef.current = null;
-      }
-      if (wsRef.current) {
-        wsRef.current.onopen = null;
-        wsRef.current.onmessage = null;
-        wsRef.current.onerror = null;
-        wsRef.current.onclose = null;
-        wsRef.current.close();
-        wsRef.current = null;
-      }
+      if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
+      if (pollingTimerRef.current) clearTimeout(pollingTimerRef.current);
     };
   }, []);
 
@@ -223,16 +223,16 @@ export default function SyncServerConnector() {
           height: '8px',
           borderRadius: '50%',
           backgroundColor: 
-            wsStatus === 'connected' ? '#10B981' : 
-            wsStatus === 'syncing' ? '#F59E0B' : '#EF4444',
+            syncStatus === 'connected' ? '#10B981' : 
+            syncStatus === 'syncing' ? '#F59E0B' : '#EF4444',
           boxShadow: 
-            wsStatus === 'connected' ? '0 0 8px #10B981' : 
-            wsStatus === 'syncing' ? '0 0 8px #F59E0B' : '0 0 8px #EF4444',
+            syncStatus === 'connected' ? '0 0 8px #10B981' : 
+            syncStatus === 'syncing' ? '0 0 8px #F59E0B' : '0 0 8px #EF4444',
         }}
       />
       <span>
-        {wsStatus === 'connected' ? 'Synced' : 
-         wsStatus === 'syncing' ? 'Saving...' : 'Offline'}
+        {syncStatus === 'connected' ? 'Synced' : 
+         syncStatus === 'syncing' ? 'Saving...' : 'Offline'}
       </span>
     </div>
   );
