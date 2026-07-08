@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "concurrently --kill-others -n \"Next,Sync\" -c \"blue,green\" \"rm -rf .next && next dev -p 3000\" \"node scripts/sync-server.js\"",
+    "dev": "rm -rf .next && next dev -p 3000",
     "build": "next build",
     "start": "next start",
     "lint": "next lint"
