@@ -44,9 +44,22 @@ export default function Toolbar({ authorized, onStartEdit, onLogout }: ToolbarPr
   const [exportingImage, setExportingImage] = useState(false);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [isStylePanelOpen, setIsStylePanelOpen] = useState(false);
-  const [syncStatus, setSyncStatus] = useState<'synced' | 'saving' | 'offline'>('offline');
+  const syncStatus = useResumeStore((s) => s.syncStatus);
   const [pulseActive, setPulseActive] = useState(false);
   const isFirstRender = useRef(true);
+
+  // 监听物理文件同步状态，同步成功落盘时触发左上角云朵绿光呼吸脉冲动效
+  useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
+    if (syncStatus === 'synced') {
+      setPulseActive(true);
+      const timer = setTimeout(() => setPulseActive(false), 800);
+      return () => clearTimeout(timer);
+    }
+  }, [syncStatus]);
 
   // 多简历管理与导入导出状态
   const [isResumeManagerOpen, setIsResumeManagerOpen] = useState(false);

@@ -130,6 +130,10 @@ interface ResumeStore {
   // 临时交互：当前聚焦/展开的模块
   activeSection: SectionKey | null;
   setActiveSection: (key: SectionKey | null) => void;
+
+  // 同步状态共享
+  syncStatus: 'synced' | 'saving' | 'offline';
+  setSyncStatus: (status: 'synced' | 'saving' | 'offline') => void;
 }
 
 // ─── 通用列表更新 helper ───────────────────────────────────
@@ -767,11 +771,13 @@ export const useResumeStore = create<ResumeStore>()(
         }),
       activeSection: null,
       setActiveSection: (activeSection) => set({ activeSection }),
+      syncStatus: 'offline',
+      setSyncStatus: (syncStatus) => set({ syncStatus }),
     })),
     {
       name: 'resume_local_draft',
       partialize: (state) => {
-        const { pages, activeSection, setActiveSection, ...rest } = state;
+        const { pages, activeSection, setActiveSection, syncStatus, setSyncStatus, ...rest } = state;
         return rest;
       },
       onRehydrateStorage: () => (state) => {

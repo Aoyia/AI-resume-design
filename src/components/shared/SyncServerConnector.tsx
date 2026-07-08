@@ -1,15 +1,15 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import { useResumeStore } from '@/store/useResumeStore';
 
 /**
- * 简历双向同步系统 - 前端 RESTful HTTP 同步调度器与诊断浮层
+ * 简历双向同步系统 - 前端 RESTful HTTP 同步调度器 (无物理 DOM UI)
  * 
  * 优化与架构改进：
  * 1. 采用 Next.js API 路由 + 150ms HTTP POST 防抖写入 + 1.5 秒轻量 HTTP GET 时间戳轮询，彻底废除独立的 WebSocket。
- * 2. 只有在用户静止（Synced 状态）且磁盘上的物理修改时间 mtime 大于客户端最后同步时间时，才拉取最新内容并覆盖，完美解决打字覆盖的 Race Condition。
- * 3. 诊断悬浮球直观反馈当前同步状态。
+ * 2. 只有在用户静止且磁盘上的物理修改时间 mtime 大于客户端最后同步时间时，才拉取最新内容并覆盖，完美解决打字覆盖的 Race Condition。
+ * 3. 剥离了多余的右下角悬浮球渲染，将连接状态以 synced / saving / offline 映射直接驱动 Zustand Store 的全局状态，从而活化左上角原生的“草稿保存/云同步”指示器。
  */
 export default function SyncServerConnector() {
   const lastSyncedDataRef = useRef<string>('');
@@ -22,9 +22,6 @@ export default function SyncServerConnector() {
   // 标志位：本地是否有最新的编辑尚未同步到服务端 (打字中/防抖挂起)
   const isDirtyRef = useRef<boolean>(false);
 
-  // 诊断状态
-  const [syncStatus, setSyncStatus] = useState<'connected' | 'syncing' | 'disconnected'>('disconnected');
-
   useEffect(() => {
     const isLocalhost = typeof window !== 'undefined' && (
       window.location.hostname === 'localhost' || 
@@ -36,6 +33,15 @@ export default function SyncServerConnector() {
     if (!isLocalhost && !hasSyncParam) return;
 
     let isDestroyed = false;
+
+    // 将内部的连通性状态映射到 Zustand 状态层
+    const setGlobalSyncStatus = (status: 'connected' | 'syncing' | 'disconnected') => {
+      if (isDestroyed) return;
+      const mapped = 
+        status === 'connected' ? 'synced' :
+        status === 'syncing' ? 'saving' : 'offline';
+      useResumeStore.getState().setSyncStatus(mapped);
+    };
 
     // 1. 首屏加载：从服务端获取最新最权威的内容来覆盖本地草稿
     async function loadInitialData() {
@@ -55,13 +61,13 @@ export default function SyncServerConnector() {
           
           lastSyncedDataRef.current = receivedDataStr;
           lastSyncedMtimeRef.current = mtime;
-          setSyncStatus('connected');
+          setGlobalSyncStatus('connected');
         } else {
-          setSyncStatus('disconnected');
+          setGlobalSyncStatus('disconnected');
         }
       } catch (err) {
         console.warn('[SyncServerConnector] Failed to fetch initial data:', err);
-        setSyncStatus('disconnected');
+        setGlobalSyncStatus('disconnected');
       }
     }
 
@@ -82,7 +88,7 @@ export default function SyncServerConnector() {
           const res = await fetch('/api/sync?action=check');
           if (res.ok) {
             const { mtime } = await res.json();
-            setSyncStatus('connected');
+            setGlobalSyncStatus('connected');
 
             // 如果磁盘上的修改时间戳大于我们最后一次同步记录的时间戳，证明外部（如 AI）修改了文件
             if (mtime > lastSyncedMtimeRef.current) {
@@ -105,11 +111,11 @@ export default function SyncServerConnector() {
               }
             }
           } else {
-            setSyncStatus('disconnected');
+            setGlobalSyncStatus('disconnected');
           }
         } catch (err) {
           console.warn('[SyncServerConnector] Polling check failed:', err);
-          setSyncStatus('disconnected');
+          setGlobalSyncStatus('disconnected');
         }
 
         scheduleNextPolling();
@@ -136,7 +142,7 @@ export default function SyncServerConnector() {
       }
       lastResume = resume;
       isDirtyRef.current = true;
-      setSyncStatus('syncing');
+      setGlobalSyncStatus('syncing');
 
       if (debounceTimerRef.current) {
         clearTimeout(debounceTimerRef.current);
@@ -150,7 +156,7 @@ export default function SyncServerConnector() {
         const resumeStr = JSON.stringify(currentResume);
         if (resumeStr === lastSyncedDataRef.current) {
           isDirtyRef.current = false;
-          setSyncStatus('connected');
+          setGlobalSyncStatus('connected');
           return;
         }
 
@@ -170,13 +176,13 @@ export default function SyncServerConnector() {
             const { mtime } = await res.json();
             lastSyncedDataRef.current = resumeStr;
             lastSyncedMtimeRef.current = mtime;
-            setSyncStatus('connected');
+            setGlobalSyncStatus('connected');
           } else {
-            setSyncStatus('disconnected');
+            setGlobalSyncStatus('disconnected');
           }
         } catch (err) {
           console.warn('[SyncServerConnector] HTTP POST sync failed:', err);
-          setSyncStatus('disconnected');
+          setGlobalSyncStatus('disconnected');
         } finally {
           isWritingRef.current = false;
           isDirtyRef.current = false;
@@ -192,33 +198,7 @@ export default function SyncServerConnector() {
     };
   }, []);
 
-  return (
-    <div 
-      id="sync-diag-indicator"
-      style={{
-        position: 'fixed',
-        bottom: '12px',
-        right: '12px',
-        zIndex: 99999,
-        pointerEvents: 'none',
-        userSelect: 'none',
-        transition: 'opacity 0.3s ease-in-out',
-        opacity: syncStatus === 'connected' ? 0 : 0.8, // 正常对齐时隐形，仅在保存中或离线时显现
-      }}
-      title={syncStatus === 'syncing' ? 'Saving changes...' : 'Offline'}
-    >
-      <span 
-        style={{
-          display: 'inline-block',
-          width: '6px',
-          height: '6px',
-          borderRadius: '50%',
-          backgroundColor: syncStatus === 'syncing' ? '#F59E0B' : '#EF4444',
-          boxShadow: syncStatus === 'syncing' ? '0 0 6px #F59E0B' : '0 0 6px #EF4444',
-        }}
-      />
-    </div>
-  );
+  return null;
 }
 
 /**
