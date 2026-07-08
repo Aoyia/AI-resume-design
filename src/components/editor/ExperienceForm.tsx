@@ -1,6 +1,7 @@
 'use client';
 
 import { useResumeStore } from '@/store/useResumeStore';
+import { smoothScrollTo } from '@/lib/scroll';
 import { ExperienceItem } from '@/types/resume';
 import Input from '@/components/ui/Input';
 import MonthPicker from '@/components/ui/DatePicker';
@@ -131,7 +132,7 @@ const SortableExperienceItem = memo(function SortableExperienceItem({
     if (activeItemId === id && domRef.current) {
       const el = domRef.current;
       // 1. 平滑滚动到当前项目/工作卡片中心
-      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      smoothScrollTo(el, 400, 'center');
 
       // 2. 触发 1.5 秒的呼吸发光高亮提示
       el.classList.add('ring-2', 'ring-[var(--primary)]', 'ring-offset-2', 'transition-all', 'duration-300');

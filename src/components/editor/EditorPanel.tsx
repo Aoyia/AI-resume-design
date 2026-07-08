@@ -26,6 +26,7 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { Popconfirm } from '@arco-design/web-react';
+import { smoothScrollTo } from '@/lib/scroll';
 import { SectionKey } from '@/types/resume';
 
 const SECTION_CONFIG: Record<SectionKey, { title: string }> = {
@@ -64,7 +65,7 @@ function SortableSection({ id }: { id: SectionKey }) {
       const timer = setTimeout(() => {
         const el = document.getElementById(`editor-section-${id}`);
         if (el) {
-          el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          smoothScrollTo(el, 400, 'start');
         }
       }, 150);
       return () => clearTimeout(timer);

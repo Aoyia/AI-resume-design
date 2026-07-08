@@ -2,6 +2,7 @@
 
 import { useRef, useEffect } from 'react';
 import { useResumeStore } from '@/store/useResumeStore';
+import { smoothScrollTo } from '@/lib/scroll';
 import Input from '@/components/ui/Input';
 import MonthPicker from '@/components/ui/DatePicker';
 import Textarea from '@/components/ui/Textarea';
@@ -58,7 +59,7 @@ function SortableEducationItem({
     if (activeItemId === item.id && domRef.current) {
       const el = domRef.current;
       // 1. 平滑滚动到当前教育经历卡片中心
-      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      smoothScrollTo(el, 400, 'center');
 
       // 2. 触发 1.5 秒的呼吸发光高亮提示
       el.classList.add('ring-2', 'ring-[var(--primary)]', 'ring-offset-2', 'transition-all', 'duration-300');
