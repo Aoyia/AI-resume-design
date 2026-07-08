@@ -214,7 +214,18 @@ export function getFlatElements(data: ResumeData): React.ReactElement[] {
   elements.push = (...items: React.ReactElement[]) => {
     const processedItems = items.map(item => {
       if (React.isValidElement(item) && currentSectionKey) {
-        return React.cloneElement(item as React.ReactElement<any>, { 'data-section': currentSectionKey });
+        const extraProps: any = { 'data-section': currentSectionKey };
+        
+        // 尝试从 data-group 属性提取具体的经历条目 ID (如 proj-{id}, work-{id})
+        const group = (item.props as any)?.['data-group'];
+        if (group && typeof group === 'string') {
+          const parts = group.split('-');
+          if (parts.length > 1) {
+            extraProps['data-item-id'] = parts.slice(1).join('-');
+          }
+        }
+        
+        return React.cloneElement(item as React.ReactElement<any>, extraProps);
       }
       return item;
     });
@@ -844,6 +855,12 @@ export default function ClassicTemplate({ data, elementIndices, onStartEdit }: C
       const sectionKey = sectionEl.getAttribute('data-section');
       if (sectionKey) {
         setActiveSection(sectionKey as any);
+        
+        // 尝试定位到具体的经历条目 ID (如项目经历中的特定项目)
+        const itemEl = target.closest('[data-item-id]');
+        const itemId = itemEl ? itemEl.getAttribute('data-item-id') : null;
+        useResumeStore.getState().setActiveItemId(itemId);
+
         window.getSelection()?.removeAllRanges();
       }
     }

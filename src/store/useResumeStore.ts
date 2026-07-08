@@ -134,6 +134,10 @@ interface ResumeStore {
   // 同步状态共享
   syncStatus: 'synced' | 'saving' | 'offline';
   setSyncStatus: (status: 'synced' | 'saving' | 'offline') => void;
+
+  // 双击精准定位经历条目 ID
+  activeItemId: string | null;
+  setActiveItemId: (id: string | null) => void;
 }
 
 // ─── 通用列表更新 helper ───────────────────────────────────
@@ -223,12 +227,7 @@ const syncResumesMiddleware = <T extends ResumeStore>(
 
         // 仅当更新中显式包含了 resume 时，同步至 resumes 列表
         if (nextState.resume) {
-          const updatedResume = { ...nextState.resume };
-
-          // 核心点：只有当不是调用 overwriteActiveResume（即没有 _isSyncFromServer 标记）时，自增 version
-          if (!(nextState as any)._isSyncFromServer) {
-            updatedResume.version = (state.resume?.version || 0) + 1;
-          }
+          const updatedResume = nextState.resume;
           const currentResumes = nextState.resumes || state.resumes || [];
           const currentId = updatedResume.id || nextState.currentResumeId || state.currentResumeId;
 
@@ -747,8 +746,7 @@ export const useResumeStore = create<ResumeStore>()(
           };
           return {
             resume: updated,
-            _isSyncFromServer: true,
-          } as any;
+          };
         }),
       importBackupPackage: (resumesList, override) =>
         set((s) => {
@@ -779,11 +777,13 @@ export const useResumeStore = create<ResumeStore>()(
       setActiveSection: (activeSection) => set({ activeSection }),
       syncStatus: 'offline',
       setSyncStatus: (syncStatus) => set({ syncStatus }),
+      activeItemId: null,
+      setActiveItemId: (activeItemId) => set({ activeItemId }),
     })),
     {
       name: 'resume_local_draft',
       partialize: (state) => {
-        const { pages, activeSection, setActiveSection, syncStatus, setSyncStatus, ...rest } = state;
+        const { pages, activeSection, setActiveSection, syncStatus, setSyncStatus, activeItemId, setActiveItemId, ...rest } = state;
         return rest;
       },
       onRehydrateStorage: () => (state) => {

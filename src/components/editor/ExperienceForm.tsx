@@ -67,7 +67,7 @@ const CONFIG: Record<Mode, {
   },
 };
 
-import { memo } from 'react';
+import { memo, useRef, useEffect } from 'react';
 
 const SortableExperienceItem = memo(function SortableExperienceItem({
   id, mode,
@@ -115,10 +115,37 @@ const SortableExperienceItem = memo(function SortableExperienceItem({
   const style = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.5 : 1 };
   const cfg = CONFIG[mode];
 
+  const activeItemId = useResumeStore((s) => s.activeItemId);
+  const setActiveItemId = useResumeStore((s) => s.setActiveItemId);
+  const domRef = useRef<HTMLDivElement | null>(null);
+
+  // 合并 Ref，让 dnd-kit 拖拽和定位 scroll 均能正常使用 DOM 节点
+  const handleRef = (node: HTMLDivElement | null) => {
+    setNodeRef(node);
+    domRef.current = node;
+  };
+
+  useEffect(() => {
+    if (activeItemId === id && domRef.current) {
+      // 1. 平滑滚动到当前项目/工作卡片中心
+      domRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+      // 2. 触发 1.5 秒的呼吸发光高亮提示
+      domRef.current.classList.add('ring-2', 'ring-[var(--primary)]', 'ring-offset-2', 'transition-all', 'duration-300');
+      const timer = setTimeout(() => {
+        domRef.current?.classList.remove('ring-2', 'ring-[var(--primary)]', 'ring-offset-2');
+      }, 1500);
+
+      // 3. 消费掉当前全局状态
+      setActiveItemId(null);
+      return () => clearTimeout(timer);
+    }
+  }, [activeItemId, id, setActiveItemId]);
+
   if (!item) return null;
 
   return (
-    <div ref={setNodeRef} style={style} className="rounded-lg border border-[var(--border)] bg-[var(--surface)] p-3 space-y-2">
+    <div ref={handleRef} style={style} className="rounded-lg border border-[var(--border)] bg-[var(--surface)] p-3 space-y-2">
       <div className="flex items-center gap-2">
         <button className="text-[var(--text-muted)] hover:text-[var(--text-secondary)] cursor-grab active:cursor-grabbing touch-none" {...attributes} {...listeners}>
           <GripVertical size={16} />

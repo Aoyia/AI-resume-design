@@ -1,5 +1,6 @@
 'use client';
 
+import { useRef, useEffect } from 'react';
 import { useResumeStore } from '@/store/useResumeStore';
 import Input from '@/components/ui/Input';
 import MonthPicker from '@/components/ui/DatePicker';
@@ -41,9 +42,36 @@ function SortableEducationItem({
     opacity: isDragging ? 0.5 : 1,
   };
 
+  const activeItemId = useResumeStore((s) => s.activeItemId);
+  const setActiveItemId = useResumeStore((s) => s.setActiveItemId);
+  const domRef = useRef<HTMLDivElement | null>(null);
+
+  // 合并 Ref，让 dnd-kit 拖拽和定位 scroll 均能正常使用 DOM 节点
+  const handleRef = (node: HTMLDivElement | null) => {
+    setNodeRef(node);
+    domRef.current = node;
+  };
+
+  useEffect(() => {
+    if (activeItemId === item.id && domRef.current) {
+      // 1. 平滑滚动到当前教育经历卡片中心
+      domRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+      // 2. 触发 1.5 秒的呼吸发光高亮提示
+      domRef.current.classList.add('ring-2', 'ring-[var(--primary)]', 'ring-offset-2', 'transition-all', 'duration-300');
+      const timer = setTimeout(() => {
+        domRef.current?.classList.remove('ring-2', 'ring-[var(--primary)]', 'ring-offset-2');
+      }, 1500);
+
+      // 3. 消费掉当前全局状态
+      setActiveItemId(null);
+      return () => clearTimeout(timer);
+    }
+  }, [activeItemId, item.id, setActiveItemId]);
+
   return (
     <div
-      ref={setNodeRef}
+      ref={handleRef}
       style={style}
       className="rounded-lg border border-[var(--border)] bg-[var(--surface)] p-3 space-y-2"
     >
