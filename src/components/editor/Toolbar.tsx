@@ -184,29 +184,7 @@ export default function Toolbar({ authorized, onStartEdit, onLogout }: ToolbarPr
     e.target.value = '';
   };
 
-  // 模拟本地/云端自动保存状态
-  useEffect(() => {
-    if (isFirstRender.current) {
-      isFirstRender.current = false;
-      return;
-    }
-    
-    setSyncStatus('saving');
-    
-    const timer = setTimeout(() => {
-      if (isLoggedIn) {
-        setSyncStatus('synced');
-      } else {
-        setSyncStatus('offline');
-      }
-      // 触发自动保存的脉冲反馈
-      setPulseActive(true);
-      const pulseTimer = setTimeout(() => setPulseActive(false), 600);
-      return () => clearTimeout(pulseTimer);
-    }, 600);
-    
-    return () => clearTimeout(timer);
-  }, [resume, isLoggedIn]);
+
 
   const handleDownloadPDF = async () => {
     setDownloading(true);
