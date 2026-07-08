@@ -197,43 +197,26 @@ export default function SyncServerConnector() {
       id="sync-diag-indicator"
       style={{
         position: 'fixed',
-        bottom: '16px',
-        right: '16px',
+        bottom: '12px',
+        right: '12px',
         zIndex: 99999,
-        display: 'flex',
-        alignItems: 'center',
-        gap: '8px',
-        padding: '6px 12px',
-        borderRadius: '20px',
-        backgroundColor: 'rgba(30, 41, 59, 0.85)',
-        backdropFilter: 'blur(4px)',
-        color: '#ffffff',
-        fontSize: '11px',
-        fontFamily: 'system-ui, sans-serif',
-        border: '1px solid rgba(255, 255, 255, 0.1)',
         pointerEvents: 'none',
         userSelect: 'none',
-        boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+        transition: 'opacity 0.3s ease-in-out',
+        opacity: syncStatus === 'connected' ? 0 : 0.8, // 正常对齐时隐形，仅在保存中或离线时显现
       }}
+      title={syncStatus === 'syncing' ? 'Saving changes...' : 'Offline'}
     >
       <span 
         style={{
           display: 'inline-block',
-          width: '8px',
-          height: '8px',
+          width: '6px',
+          height: '6px',
           borderRadius: '50%',
-          backgroundColor: 
-            syncStatus === 'connected' ? '#10B981' : 
-            syncStatus === 'syncing' ? '#F59E0B' : '#EF4444',
-          boxShadow: 
-            syncStatus === 'connected' ? '0 0 8px #10B981' : 
-            syncStatus === 'syncing' ? '0 0 8px #F59E0B' : '0 0 8px #EF4444',
+          backgroundColor: syncStatus === 'syncing' ? '#F59E0B' : '#EF4444',
+          boxShadow: syncStatus === 'syncing' ? '0 0 6px #F59E0B' : '0 0 6px #EF4444',
         }}
       />
-      <span>
-        {syncStatus === 'connected' ? 'Synced' : 
-         syncStatus === 'syncing' ? 'Saving...' : 'Offline'}
-      </span>
     </div>
   );
 }
